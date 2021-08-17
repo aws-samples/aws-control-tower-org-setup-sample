@@ -69,7 +69,7 @@ This project configures the following [AWS Organizations](https://aws.amazon.com
 | ExecutionRoleName        | String | AWSControlTowerExecution | IAM execution role in each new account                                                                                                          |
 | AdministratorAccountName | String |          Audit           | Name of the AWS account to use for security operations                                                                                          |
 | ExecutionCount           | Number |            1             | Increment value to re-execute OrganizationSetup Lambda function                                                                                 |
-| EnableAIOptOutPolicy     | String |          false           | Optionally [opt-out](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out.html) of AI-service improvmenet |
+| EnableAIOptOutPolicy     | String |          false           | Optionally [opt-out](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out.html) of AI-service improvement |
 
 #### Installation
 
