@@ -1,0 +1,55 @@
+{
+  "version": "0",
+  "id": "999cccaa-eaaa-0000-1111-123456789012",
+  "detail-type": "AWS Service Event via CloudTrail",
+  "source": "aws.controltower",
+  "account": "XXXXXXXXXXXX",
+  "time": "2018-08-30T21:42:18Z",
+  "region": "us-east-1",
+  "resources": [],
+  "detail": {
+    "eventVersion": "1.05",
+    "userIdentity": {
+      "accountId": "XXXXXXXXXXXX",
+      "invokedBy": "AWS Internal"
+    },
+    "eventTime": "2018-08-30T21:42:18Z",
+    "eventSource": "controltower.amazonaws.com",
+    "eventName": "SetupLandingZone",
+    "awsRegion": "us-east-1",
+    "sourceIPAddress": "AWS Internal",
+    "userAgent": "AWS Internal",
+    "eventID": "CloudTrail_event_ID",
+    "readOnly": false,
+    "eventType": "AwsServiceEvent",
+    "serviceEventDetails": {
+      "setupLandingZoneStatus": {
+        "state": "SUCCEEDED",
+        "message": "AWS Control Tower successfully set up a new landing zone.",
+        "rootOrganizationalId": "r-1234",
+        "organizationalUnits": [
+          {
+            "organizationalUnitName": "Core",
+            "organizationalUnitId": "ou-adpf-302pk332"
+          },
+          {
+            "organizationalUnitName": "Custom",
+            "organizationalUnitId": "ou-adpf-302pk332"
+          }
+        ],
+        "accounts": [
+          {
+            "accountName": "Audit",
+            "accountId": "XXXXXXXXXXXX"
+          },
+          {
+            "accountName": "Log archive",
+            "accountId": "XXXXXXXXXXXX"
+          }
+        ],
+        "requestedTimestamp": "2018-08-30T21:42:18Z",
+        "completedTimestamp": "2018-08-30T21:42:18Z"
+      }
+    }
+  }
+}

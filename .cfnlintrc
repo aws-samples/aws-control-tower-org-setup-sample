@@ -1,0 +1,10 @@
+templates:
+- template.yml
+include_checks:
+- I
+regions:
+- us-east-1
+- us-east-2
+- us-west-2
+- ap-southeast-2
+- eu-west-1

@@ -1,0 +1,186 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: "AWS::Serverless-2016-10-31"
+Description: Automated AWS Organizations configuration for security operations
+
+Parameters:
+  Regions:
+    Type: CommaDelimitedList
+    Description: Regions to enable for Security Hub and GuardDuty (leave blank for all regions)
+    Default: "us-east-1"
+  ExecutionRoleName:
+    Type: String
+    Description: Execution IAM role name
+    Default: AWSControlTowerExecution
+  AdministratorAccountName:
+    Type: String
+    Description: "Security operations AWS account name (Audit Manager, SecurityHub, GuardDuty, Macie, S3 Storage Lens and Firewall Manager)"
+    Default: Audit
+  ExecutionCount:
+    Type: Number
+    Description: Increment this value to re-execute the OrganizationSetup custom resource
+    Default: 1
+  EnableAIOptOutPolicy:
+    Type: String
+    Description: Opt-out of AI-services improvement
+    Default: "false"
+    AllowedValues:
+      - "true"
+      - "false"
+
+Resources:
+  DependencyLayer:
+    Type: "AWS::Serverless::LayerVersion"
+    Metadata:
+      BuildMethod: python3.8
+    Properties:
+      LicenseInfo: MIT-0
+      CompatibleRuntimes:
+        - python3.8
+      ContentUri: dependencies
+      Description: DO NOT DELETE - OrganizationSetup - Latest versions of common Python packages
+      RetentionPolicy: Delete
+
+  OrganizationSetupFunctionLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${OrganizationSetupFunction}"
+      RetentionInDays: 3
+
+  OrganizationSetupFunctionRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: !Sub "lambda.${AWS::URLSuffix}"
+          Action: "sts:AssumeRole"
+      Description: !Sub "DO NOT DELETE - Used by Lambda. Created by CloudFormation ${AWS::StackId}"
+      Policies:
+        - PolicyName: OrganizationSetupFunctionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: OrganizationsAccess
+                Effect: Allow
+                Action:
+                  - "organizations:AttachPolicy"
+                  - "organizations:CreatePolicy"
+                  - "organizations:DescribeEffectivePolicy"
+                  - "organizations:DescribeOrganization"
+                  - "organizations:EnableAWSServiceAccess"
+                  - "organizations:EnableAllFeatures"
+                  - "organizations:EnablePolicyType"
+                  - "organizations:ListAccounts"
+                  - "organizations:ListPolicies"
+                  - "organizations:ListRoots"
+                  - "organizations:RegisterDelegatedAdministrator"
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - "ec2:DescribeRegions"
+                  - "auditmanager:RegisterOrganizationAdminAccount"
+                  - "fms:AssociateAdminAccount"
+                  - "guardduty:EnableOrganizationAdminAccount"
+                  - "macie2:EnableOrganizationAdminAccount"
+                  - "ram:EnableSharingWithAwsOrganization"
+                  - "securityhub:EnableOrganizationAdminAccount"
+                  - "servicecatalog:EnableAWSOrganizationsAccess"
+                Resource: "*"
+              - Effect: Allow
+                Action: "sts:AssumeRole"
+                Resource: !Sub "arn:${AWS::Partition}:iam::*:role/AWSControlTowerExecution"
+      Tags:
+        - Key: "aws-cloudformation:stack-name"
+          Value: !Ref "AWS::StackName"
+        - Key: "aws-cloudformation:stack-id"
+          Value: !Ref "AWS::StackId"
+        - Key: "aws-cloudformation:logical-id"
+          Value: OrganizationSetupFunctionRole
+
+  CloudWatchLogsPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      PolicyName: CloudWatchLogs
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "logs:CreateLogStream"
+              - "logs:PutLogEvents"
+            Resource: !GetAtt OrganizationSetupFunctionLogGroup.Arn
+      Roles:
+        - !Ref OrganizationSetupFunctionRole
+
+  SigningProfile:
+    Type: "AWS::Signer::SigningProfile"
+    Properties:
+      PlatformId: AWSLambda-SHA384-ECDSA
+      SignatureValidityPeriod:
+        Type: MONTHS
+        Value: 135
+
+  CodeSigningConfig:
+    Type: "AWS::Lambda::CodeSigningConfig"
+    Properties:
+      Description: OrganizationSetup Code Signing
+      AllowedPublishers:
+        SigningProfileVersionArns:
+          - !GetAtt SigningProfile.ProfileVersionArn
+      CodeSigningPolicies:
+        UntrustedArtifactOnDeployment: Enforce
+
+  OrganizationSetupFunction:
+    Type: "AWS::Serverless::Function"
+    Properties:
+      CodeSigningConfigArn: !Ref CodeSigningConfig
+      CodeUri: src/
+      Description: Organization Setup Function
+      Environment:
+        Variables:
+          ADMINISTRATOR_ACCOUNT_NAME: !Ref AdministratorAccountName
+          ENABLE_AI_OPTOUT_POLICY: !Ref EnableAIOptOutPolicy
+          EXECUTION_ROLE_NAME: !Ref ExecutionRoleName
+          LOG_LEVEL: INFO
+          POWERTOOLS_METRICS_NAMESPACE: OrganizationSetup
+          POWERTOOLS_SERVICE_NAME: organization_setup
+          REGIONS: !Join [",", !Ref Regions]
+      Events:
+        EventBridgeEvent:
+          Type: EventBridgeRule
+          Properties:
+            InputPath: "$.detail"
+            Pattern:
+              source:
+                - "aws.controltower"
+              "detail-type":
+                - "AWS Service Event via CloudTrail"
+              detail:
+                eventName:
+                  - SetupLandingZone
+                serviceEventDetails:
+                  setupLandingZoneStatus:
+                    state:
+                      - SUCCEEDED
+      Handler: org_setup.lambda_handler.handler
+      Layers:
+        - !Ref DependencyLayer
+      MemorySize: 128 # megabytes
+      Role: !GetAtt OrganizationSetupFunctionRole.Arn
+      Runtime: python3.8
+      Timeout: 30 # seconds
+
+  OrganizationSetup:
+    Type: "Custom::OrganizationSetup"
+    DependsOn: CloudWatchLogsPolicy
+    Properties:
+      ServiceToken: !GetAtt OrganizationSetupFunction.Arn
+      ExecutionCount: !Ref ExecutionCount

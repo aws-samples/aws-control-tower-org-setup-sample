@@ -1,0 +1,2 @@
+aws-lambda-powertools==1.19.0
+crhelper==2.0.10
