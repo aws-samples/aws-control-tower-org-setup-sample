@@ -19,6 +19,7 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from functools import lru_cache
 import json
 from typing import List, Dict, Optional, Iterable, Any
 
@@ -36,8 +37,9 @@ __all__ = ["Organizations"]
 
 
 class Organizations:
-    def __init__(self, session: boto3.Session) -> None:
-        self.client = session.client("organizations")
+    def __init__(self, session: boto3.Session, region: str) -> None:
+        self.client = session.client("organizations", region_name=region)
+        self.region = region
         self._roots = []
         self._accounts = []
 
@@ -50,7 +52,7 @@ class Organizations:
         except self.client.exceptions.AWSOrganizationsNotInUseException:
             raise OrganizationNotFoundException("Organization Not Found")
         except botocore.exceptions.ClientError:
-            logger.exception("Unable to describe organization")
+            logger.exception(f"[{self.region} Unable to describe organization")
             raise
         return response["Organization"]
 
@@ -64,7 +66,7 @@ class Organizations:
         accounts = []
 
         paginator = self.client.get_paginator("list_accounts")
-        page_iterator = paginator.paginate(PaginationConfig={"PageSize": 100})
+        page_iterator = paginator.paginate(PaginationConfig={"PageSize": 20})
         for page in page_iterator:
             for account in page.get("Accounts", []):
                 if account.get("Status") != "ACTIVE":
@@ -106,27 +108,35 @@ class Organizations:
         """
         Enable all features in an organization
         """
-        logger.info("Enabling all features in the organization")
+        logger.info(f"[{self.region}] Enabling all features in the organization")
         try:
             self.client.enable_all_features()
-            logger.debug("Enabled all features in organization")
-        except botocore.exceptions.ClientError:
-            logger.exception("Unable to enable all features in organization")
-            raise
+            logger.debug(f"[{self.region}] Enabled all features in organization")
+        except botocore.exceptions.ClientError as error:
+            if (
+                error.response["Error"]["Code"]
+                != "HandshakeConstraintViolationException"
+            ):
+                logger.exception(
+                    f"[{self.region}] Unable to enable all features in organization"
+                )
+                raise
 
     def enable_aws_service_access(self, principals: Iterable[str]) -> None:
         """
         Enable AWS service access in organization
         """
         for principal in principals:
-            logger.info(f"Enabling AWS service access for {principal}")
+            logger.info(f"[{self.region}] Enabling AWS service access for {principal}")
             try:
                 self.client.enable_aws_service_access(ServicePrincipal=principal)
-                logger.debug(f"Enabled AWS service access for {principal}")
+                logger.debug(
+                    f"[{self.region}] Enabled AWS service access for {principal}"
+                )
             except botocore.exceptions.ClientError as error:
                 if error.response["Error"]["Code"] != "ServiceException":
                     logger.exception(
-                        f"Unable enable AWS service access for {principal}"
+                        f"[{self.region}] Unable enable AWS service access for {principal}"
                     )
                     raise error
 
@@ -134,7 +144,7 @@ class Organizations:
         """
         Enables all policy types in an organization
         """
-        logger.info("Enabling all policy types in organization")
+        logger.info(f"[{self.region}] Enabling all policy types in organization")
 
         for root in self.list_roots():
             root_id = root["Id"]
@@ -145,23 +155,27 @@ class Organizations:
             ]
 
             for disabled_type in disabled_types:
-                logger.info(f"Enabling policy type {disabled_type} on root {root_id}")
+                logger.info(
+                    f"[{self.region}] Enabling policy type {disabled_type} on root {root_id}"
+                )
                 try:
                     self.client.enable_policy_type(
                         RootId=root_id, PolicyType=disabled_type
                     )
                     logger.debug(
-                        f"Enabled policy type {disabled_type} on root {root_id}"
+                        f"[{self.region}] Enabled policy type {disabled_type} on root {root_id}"
                     )
                 except botocore.exceptions.ClientError as error:
                     if (
                         error.response["Error"]["Code"]
                         != "PolicyTypeAlreadyEnabledException"
                     ):
-                        logger.exception("Unable to enable policy type")
+                        logger.exception(
+                            f"[{self.region}] Unable to enable policy type"
+                        )
                         raise error
 
-        logger.debug("Enabled all policy types in organization")
+        logger.debug(f"[{self.region}] Enabled all policy types in organization")
 
     def get_ai_optout_policy(self) -> str:
         """
@@ -173,7 +187,9 @@ class Organizations:
                 logger.info(f"Found existing {AI_OPT_OUT_POLICY_NAME} policy")
                 return policy["Id"]
 
-        logger.info(f"{AI_OPT_OUT_POLICY_NAME} policy not found, creating")
+        logger.info(
+            f"[{self.region}] {AI_OPT_OUT_POLICY_NAME} policy not found, creating"
+        )
 
         try:
             response = self.client.create_policy(
@@ -183,7 +199,9 @@ class Organizations:
                 Type="AISERVICES_OPT_OUT_POLICY",
             )
             policy_id = response.get("Policy", {}).get("PolicySummary", {}).get("Id")
-            logger.debug(f"Created policy {AI_OPT_OUT_POLICY_NAME} ({policy_id})")
+            logger.debug(
+                f"[{self.region}] Created policy {AI_OPT_OUT_POLICY_NAME} ({policy_id})"
+            )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] == "DuplicatePolicyException":
                 return self.get_ai_optout_policy()
@@ -197,25 +215,27 @@ class Organizations:
         """
         policy_id = self.get_ai_optout_policy()
         if not policy_id:
-            logger.warn(f"Unable to find {AI_OPT_OUT_POLICY_NAME} policy")
+            logger.warn(
+                f"[{self.region}] Unable to find {AI_OPT_OUT_POLICY_NAME} policy"
+            )
             return
 
         for root in self.list_roots():
             root_id = root["Id"]
             logger.info(
-                f"Attaching {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}"
+                f"[{self.region}] Attaching {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}"
             )
             try:
                 self.client.attach_policy(PolicyId=policy_id, TargetId=root_id)
                 logger.debug(
-                    f"Attached {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}"
+                    f"[{self.region}] Attached {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}"
                 )
             except botocore.exceptions.ClientError as error:
                 if (
                     error.response["Error"]["Code"]
                     != "DuplicatePolicyAttachmentException"
                 ):
-                    logger.exception("Unable to attach policy")
+                    logger.exception(f"[{self.region}] Unable to attach policy")
                     raise error
 
     def register_delegated_administrator(
@@ -227,14 +247,14 @@ class Organizations:
 
         for principal in principals:
             logger.info(
-                f"Registering {account_id} as a delegated administrator for {principal}"
+                f"[{self.region}] Registering {account_id} as a delegated administrator for {principal}"
             )
             try:
                 self.client.register_delegated_administrator(
                     AccountId=account_id, ServicePrincipal=principal
                 )
                 logger.debug(
-                    f"Registered {account_id} as a delegated administrator for {principal}"
+                    f"[{self.region}] Registered {account_id} as a delegated administrator for {principal}"
                 )
             except botocore.exceptions.ClientError as error:
                 if (
@@ -242,10 +262,11 @@ class Organizations:
                     != "AccountAlreadyRegisteredException"
                 ):
                     logger.exception(
-                        f"Unable to register {account_id} as a delegated administrator for {principal}"
+                        f"[{self.region}] Unable to register {account_id} as a delegated administrator for {principal}"
                     )
                     raise error
 
+    @lru_cache
     def get_account_id(self, name: str) -> Optional[str]:
         """
         Return the Account ID for an account

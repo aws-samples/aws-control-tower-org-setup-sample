@@ -30,7 +30,6 @@ from crhelper import CfnResource
 from .constants import SERVICE_ACCESS_PRINCIPALS, DELEGATED_ADMINISTRATOR_PRINCIPALS
 from .resources import (
     AccessAnalyzer,
-    AuditManager,
     EC2,
     FMS,
     GuardDuty,
@@ -44,32 +43,35 @@ from .resources import (
 helper = CfnResource(json_logging=True, log_level="INFO", boto_level="INFO")
 
 try:
-    ADMINISTRATOR_ACCOUNT_NAME = os.environ["ADMINISTRATOR_ACCOUNT_NAME"]
-    REGIONS = os.getenv("REGIONS", "").split(",")
+    tracer = Tracer()
+    logger = Logger()
+    REGIONS: List[str] = os.getenv("REGIONS", "").split(",")
     REGIONS = list(filter(None, REGIONS))  # remove empty strings
+    ADMINISTRATOR_ACCOUNT_NAME: str = os.environ["ADMINISTRATOR_ACCOUNT_NAME"]
+    PRIMARY_REGION: str = os.environ["PRIMARY_REGION"]
     ENABLE_AI_OPTOUT_POLICY: bool = (
         os.getenv("ENABLE_AI_OPTOUT_POLICY", False) == "true"
     )
-    tracer = Tracer()
-    logger = Logger()
 except Exception as exc:
     helper.init_failure(exc)
 
 
 @tracer.capture_method
 def setup_organization(
-    admin_account_id: str = None,
+    primary_region: str, admin_account_id: str = None, regions: List[str] = None
 ) -> None:
     """
     Set up the organization in multiple regions
     """
 
     session = boto3.Session()
-    organizations = Organizations(session)
+    organizations = Organizations(session, primary_region)
     org = organizations.describe_organization()
     org_id: str = org["Id"]
 
-    logger.info(f"Configuring organization {org_id} in regions: {REGIONS}")
+    logger.info(
+        f"[{primary_region}] Configuring organization {org_id} in regions: {regions}"
+    )
 
     # enable all organizational features
     organizations.enable_all_features()
@@ -94,30 +96,28 @@ def setup_organization(
         admin_account_id = organizations.get_account_id(ADMINISTRATOR_ACCOUNT_NAME)
         if not admin_account_id:
             logger.warning(
-                f'No administrator account found named "{ADMINISTRATOR_ACCOUNT_NAME}"'
+                f'[{primary_region}] No administrator account found named "{ADMINISTRATOR_ACCOUNT_NAME}"'
             )
             return
 
-    # Register the administrator account as a delegated administer on AWS services
-    organizations.register_delegated_administrator(
-        admin_account_id, DELEGATED_ADMINISTRATOR_PRINCIPALS
+    logger.info(
+        f"[{primary_region}] Delegating IAM Access Analyzer administration to {admin_account_id}"
     )
-
-    logger.info(f"Delegating IAM Access Analyzer administration to {admin_account_id}")
 
     # Create organization IAM access analyzer in the administrator account
     AccessAnalyzer.create_org_analyzer(session, admin_account_id)
 
-    logger.info(f"Delegating Firewall Manager administration to {admin_account_id}")
+    if not regions:
+        regions = EC2(session).get_all_regions()
 
-    # Delegate Firewall Manager to the administrator account
-    FMS(session).associate_admin_account(admin_account_id)
+    for region in regions:
 
-    global REGIONS
-    if not REGIONS:
-        REGIONS = EC2(session).get_all_regions()
+        # Register the administrator account as a delegated administer on AWS services
+        org_regional = Organizations(session, region)
+        org_regional.register_delegated_administrator(
+            admin_account_id, DELEGATED_ADMINISTRATOR_PRINCIPALS
+        )
 
-    for region in REGIONS:
         logger.info(
             f"[{region}] Delegating Security Hub administration to {admin_account_id}"
         )
@@ -153,20 +153,18 @@ def setup_organization(
         macie.update_organization_configuration(admin_account_id)
 
         logger.info(
-            f"[{region}] Delegating Audit Manager administration to {admin_account_id}"
+            f"[{region}] Delegating Firewall Manager administration to {admin_account_id}"
         )
 
-        auditmanager = AuditManager(session, region)
-
-        # delegate Audit Manager administration to the admin_account_id
-        auditmanager.register_organization_admin_account(admin_account_id)
+        # Delegate Firewall Manager to the administrator account
+        FMS(session, region).associate_admin_account(admin_account_id)
 
 
 @helper.create
 @helper.update
 def create(event: Dict[str, Any], context: LambdaContext) -> bool:
     logger.info("Got Create or Update")
-    setup_organization()
+    setup_organization(primary_region=PRIMARY_REGION, regions=REGIONS)
 
 
 @helper.delete
@@ -180,6 +178,7 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
     # Set up a new landing zone
     if event.get("eventName") == "SetupLandingZone":
+        primary_region = event["awsRegion"]
         accounts: List[Dict[str, str]] = (
             event.get("serviceEventDetails", {})
             .get("setupLandingZoneStatus", {})
@@ -193,6 +192,6 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> None:
                 admin_account_id = account["accountId"]
                 break
 
-        return setup_organization(admin_account_id)
+        return setup_organization(primary_region, admin_account_id, REGIONS)
 
     helper(event, context)

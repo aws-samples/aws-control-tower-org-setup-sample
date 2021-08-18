@@ -38,17 +38,17 @@ class GuardDuty:
 
     def enable_organization_admin_account(self, account_id: str) -> None:
         logger.info(
-            f"Enabling account {account_id} to be GuardDuty admin account in {self.region}"
+            f"[{self.region}] Enabling account {account_id} to be GuardDuty admin account"
         )
         try:
             self.client.enable_organization_admin_account(AdminAccountId=account_id)
             logger.debug(
-                f"Enabled account {account_id} to be GuardDuty admin account in {self.region}"
+                f"[{self.region}] Enabled account {account_id} to be GuardDuty admin account"
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "BadRequestException":
                 logger.exception(
-                    f"Unable to enable account {account_id} to be GuardDuty admin account in {self.region}"
+                    f"[{self.region}] Unable to enable account {account_id} to be GuardDuty admin account"
                 )
                 raise error
 

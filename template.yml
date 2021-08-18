@@ -76,12 +76,16 @@ Resources:
                 Action:
                   - "organizations:AttachPolicy"
                   - "organizations:CreatePolicy"
+                  - "organizations:DescribeAccount"
                   - "organizations:DescribeEffectivePolicy"
                   - "organizations:DescribeOrganization"
+                  - "organizations:DescribeOrganizationalUnit"
                   - "organizations:EnableAWSServiceAccess"
                   - "organizations:EnableAllFeatures"
                   - "organizations:EnablePolicyType"
                   - "organizations:ListAccounts"
+                  - "organizations:ListAWSServiceAccessForOrganization"
+                  - "organizations:ListDelegatedAdministrators"
                   - "organizations:ListPolicies"
                   - "organizations:ListRoots"
                   - "organizations:RegisterDelegatedAdministrator"
@@ -89,7 +93,6 @@ Resources:
               - Effect: Allow
                 Action:
                   - "ec2:DescribeRegions"
-                  - "auditmanager:RegisterOrganizationAdminAccount"
                   - "fms:AssociateAdminAccount"
                   - "guardduty:EnableOrganizationAdminAccount"
                   - "macie2:EnableOrganizationAdminAccount"
@@ -145,9 +148,8 @@ Resources:
           ENABLE_AI_OPTOUT_POLICY: !Ref EnableAIOptOutPolicy
           EXECUTION_ROLE_NAME: !Ref ExecutionRoleName
           LOG_LEVEL: INFO
-          POWERTOOLS_METRICS_NAMESPACE: OrganizationSetup
-          POWERTOOLS_SERVICE_NAME: organization_setup
           REGIONS: !Join [",", !Ref Regions]
+          PRIMARY_REGION: !Ref "AWS::Region"
       Events:
         EventBridgeEvent:
           Type: EventBridgeRule
