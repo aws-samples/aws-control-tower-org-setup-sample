@@ -22,7 +22,6 @@ This project configures the following [AWS Organizations](https://aws.amazon.com
 - [AWS Security Hub](https://aws.amazon.com/securityhub/)
 - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
 - [Amazon Macie](https://aws.amazon.com/macie/)
-- [AWS Audit Manager](https://aws.amazon.com/audit-manager/)
 - [AWS IAM Access Analyzer](https://aws.amazon.com/iam/features/analyze-access/)
 
 2. Enables organizational sharing for [AWS Service Catalog](https://aws.amazon.com/servicecatalog/) and [AWS Resource Access Manager](https://aws.amazon.com/ram/) (RAM)
@@ -56,7 +55,6 @@ This project configures the following [AWS Organizations](https://aws.amazon.com
 - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/) - AWS Firewall Manager is a security management service which allows you to centrally configure and manage firewall rules across your accounts and applications in AWS Organizations.
 - [AWS Service Catalog](https://aws.amazon.com/servicecatalog/) - AWS Service Catalog allows organizations to create and manage catalogs of IT services that are approved for use on AWS.
 - [AWS Resource Access Manager](https://aws.amazon.com/ram/) - AWS Resource Access Manager (RAM) helps you securely share your resources across AWS accounts, within your organization or organizational units (OUs) in AWS Organizations, and with IAM roles and IAM users for supported resource types.
-- [AWS Audit Manager](https://aws.amazon.com/audit-manager/) - AWS Audit Manager helps you continuously audit your AWS usage to simplify how you assess risk and compliance with regulations and industry standards.
 - [AWS IAM Access Analyzer](https://aws.amazon.com/iam/features/analyze-access/) - IAM Access Analyzer helps you review existing access so that you can identify and remove unintended external or unused permissions.
 
 ## Usage
@@ -78,8 +76,9 @@ The CloudFormation stack must be deployed in the same AWS account where the AWS 
 ```
 git clone https://github.com/aws-samples/aws-control-tower-org-setup-sample
 cd aws-control-tower-org-setup-sample
+aws signer put-signing-profile --platform-id "AWSLambda-SHA384-ECDSA" --profile-name OrganizationSetupProfile
 sam build
-sam deploy --guided
+sam deploy --guided --signing-profiles OrganizationSetupFunction=OrganizationSetupProfile DependencyLayer=OrganizationSetupProfile
 ```
 
 ## Clean up

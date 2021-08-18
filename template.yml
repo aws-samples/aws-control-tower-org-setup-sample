@@ -23,6 +23,9 @@ Parameters:
     Type: Number
     Description: Increment this value to re-execute the OrganizationSetup custom resource
     Default: 1
+  SigningProfileVersionArn:
+    Type: String
+    Description: Code Signing Profile Version ARN
   EnableAIOptOutPolicy:
     Type: String
     Description: Opt-out of AI-services improvement
@@ -73,12 +76,16 @@ Resources:
                 Action:
                   - "organizations:AttachPolicy"
                   - "organizations:CreatePolicy"
+                  - "organizations:DescribeAccount"
                   - "organizations:DescribeEffectivePolicy"
                   - "organizations:DescribeOrganization"
+                  - "organizations:DescribeOrganizationalUnit"
                   - "organizations:EnableAWSServiceAccess"
                   - "organizations:EnableAllFeatures"
                   - "organizations:EnablePolicyType"
                   - "organizations:ListAccounts"
+                  - "organizations:ListAWSServiceAccessForOrganization"
+                  - "organizations:ListDelegatedAdministrators"
                   - "organizations:ListPolicies"
                   - "organizations:ListRoots"
                   - "organizations:RegisterDelegatedAdministrator"
@@ -86,7 +93,6 @@ Resources:
               - Effect: Allow
                 Action:
                   - "ec2:DescribeRegions"
-                  - "auditmanager:RegisterOrganizationAdminAccount"
                   - "fms:AssociateAdminAccount"
                   - "guardduty:EnableOrganizationAdminAccount"
                   - "macie2:EnableOrganizationAdminAccount"
@@ -120,21 +126,13 @@ Resources:
       Roles:
         - !Ref OrganizationSetupFunctionRole
 
-  SigningProfile:
-    Type: "AWS::Signer::SigningProfile"
-    Properties:
-      PlatformId: AWSLambda-SHA384-ECDSA
-      SignatureValidityPeriod:
-        Type: MONTHS
-        Value: 135
-
   CodeSigningConfig:
     Type: "AWS::Lambda::CodeSigningConfig"
     Properties:
       Description: OrganizationSetup Code Signing
       AllowedPublishers:
         SigningProfileVersionArns:
-          - !GetAtt SigningProfile.ProfileVersionArn
+          - !Ref SigningProfileVersionArn
       CodeSigningPolicies:
         UntrustedArtifactOnDeployment: Enforce
 
@@ -150,9 +148,8 @@ Resources:
           ENABLE_AI_OPTOUT_POLICY: !Ref EnableAIOptOutPolicy
           EXECUTION_ROLE_NAME: !Ref ExecutionRoleName
           LOG_LEVEL: INFO
-          POWERTOOLS_METRICS_NAMESPACE: OrganizationSetup
-          POWERTOOLS_SERVICE_NAME: organization_setup
           REGIONS: !Join [",", !Ref Regions]
+          PRIMARY_REGION: !Ref "AWS::Region"
       Events:
         EventBridgeEvent:
           Type: EventBridgeRule

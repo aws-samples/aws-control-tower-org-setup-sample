@@ -29,21 +29,22 @@ __all__ = ["FMS"]
 
 
 class FMS:
-    def __init__(self, session: boto3.Session) -> None:
-        self.client = session.client("fms")
+    def __init__(self, session: boto3.Session, region: str) -> None:
+        self.client = session.client("fms", region_name=region)
+        self.region = region
 
     def associate_admin_account(self, account_id: str) -> None:
         logger.info(
-            f"Enabling account {account_id} to be Firewall Manager admin account"
+            f"[{self.region}] Enabling account {account_id} to be Firewall Manager admin account"
         )
         try:
             self.client.associate_admin_account(AdminAccount=account_id)
             logger.debug(
-                f"Enabled account {account_id} to be Firewall Manager admin account"
+                f"[{self.region}] Enabled account {account_id} to be Firewall Manager admin account"
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "InternalErrorException":
                 logger.exception(
-                    f"Unable to enable account {account_id} to be Firewall Manager admin account"
+                    f"[{self.region}] Unable to enable account {account_id} to be Firewall Manager admin account"
                 )
                 raise error

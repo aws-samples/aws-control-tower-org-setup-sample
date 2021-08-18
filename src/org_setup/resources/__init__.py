@@ -20,7 +20,6 @@
 """
 
 from .accessanalyzer import AccessAnalyzer
-from .auditmanager import AuditManager
 from .ec2 import EC2
 from .fms import FMS
 from .guardduty import GuardDuty
@@ -33,7 +32,6 @@ from .sts import STS
 
 __all__ = [
     "AccessAnalyzer",
-    "AuditManager",
     "EC2",
     "FMS",
     "GuardDuty",
