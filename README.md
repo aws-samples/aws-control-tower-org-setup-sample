@@ -78,8 +78,9 @@ The CloudFormation stack must be deployed in the same AWS account where the AWS 
 ```
 git clone https://github.com/aws-samples/aws-control-tower-org-setup-sample
 cd aws-control-tower-org-setup-sample
+aws signer put-signing-profile --platform-id "AWSLambda-SHA384-ECDSA" --profile-name OrganizationSetupProfile
 sam build
-sam deploy --guided
+sam deploy --guided --signing-profiles OrganizationSetupFunction=OrganizationSetupProfile DependencyLayer=OrganizationSetupProfile
 ```
 
 ## Clean up

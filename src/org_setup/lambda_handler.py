@@ -113,8 +113,8 @@ def setup_organization(
     # Delegate Firewall Manager to the administrator account
     FMS(session).associate_admin_account(admin_account_id)
 
+    global REGIONS
     if not REGIONS:
-        global REGIONS
         REGIONS = EC2(session).get_all_regions()
 
     for region in REGIONS:

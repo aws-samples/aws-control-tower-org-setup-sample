@@ -23,6 +23,9 @@ Parameters:
     Type: Number
     Description: Increment this value to re-execute the OrganizationSetup custom resource
     Default: 1
+  SigningProfileVersionArn:
+    Type: String
+    Description: Code Signing Profile Version ARN
   EnableAIOptOutPolicy:
     Type: String
     Description: Opt-out of AI-services improvement
@@ -120,21 +123,13 @@ Resources:
       Roles:
         - !Ref OrganizationSetupFunctionRole
 
-  SigningProfile:
-    Type: "AWS::Signer::SigningProfile"
-    Properties:
-      PlatformId: AWSLambda-SHA384-ECDSA
-      SignatureValidityPeriod:
-        Type: MONTHS
-        Value: 135
-
   CodeSigningConfig:
     Type: "AWS::Lambda::CodeSigningConfig"
     Properties:
       Description: OrganizationSetup Code Signing
       AllowedPublishers:
         SigningProfileVersionArns:
-          - !GetAtt SigningProfile.ProfileVersionArn
+          - !Ref SigningProfileVersionArn
       CodeSigningPolicies:
         UntrustedArtifactOnDeployment: Enforce
 
