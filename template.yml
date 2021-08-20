@@ -35,18 +35,6 @@ Parameters:
       - "false"
 
 Resources:
-  DependencyLayer:
-    Type: "AWS::Serverless::LayerVersion"
-    Metadata:
-      BuildMethod: python3.8
-    Properties:
-      LicenseInfo: MIT-0
-      CompatibleRuntimes:
-        - python3.8
-      ContentUri: dependencies
-      Description: DO NOT DELETE - OrganizationSetup - Latest versions of common Python packages
-      RetentionPolicy: Delete
-
   OrganizationSetupFunctionLogGroup:
     Type: "AWS::Logs::LogGroup"
     UpdateReplacePolicy: Delete
@@ -141,7 +129,7 @@ Resources:
     Properties:
       CodeSigningConfigArn: !Ref CodeSigningConfig
       CodeUri: src/
-      Description: Organization Setup Function
+      Description: DO NOT DELETE - Organization Setup Function
       Environment:
         Variables:
           ADMINISTRATOR_ACCOUNT_NAME: !Ref AdministratorAccountName
@@ -168,11 +156,9 @@ Resources:
                     state:
                       - SUCCEEDED
       Handler: org_setup.lambda_handler.handler
-      Layers:
-        - !Ref DependencyLayer
       MemorySize: 128 # megabytes
       Role: !GetAtt OrganizationSetupFunctionRole.Arn
-      Runtime: python3.8
+      Runtime: python3.9
       Timeout: 30 # seconds
 
   OrganizationSetup:

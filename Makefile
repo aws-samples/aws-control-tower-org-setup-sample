@@ -1,4 +1,4 @@
-.PHONY: setup build deploy format create-signing-profile
+.PHONY: setup build deploy format create-signing-profile clean
 
 setup:
 	python3 -m venv .venv
@@ -13,7 +13,12 @@ build:
 	sam build -u
 
 deploy:
-	sam deploy --signing-profiles OrganizationSetupFunction=OrganizationSetupProfile DependencyLayer=OrganizationSetupProfile
+	sam deploy \
+		--signing-profiles \
+			OrganizationSetupFunction=OrganizationSetupProfile
+
+clean:
+	sam delete
 
 format:
 	.venv/bin/black -t py38 .
