@@ -68,6 +68,7 @@ This project configures the following [AWS Organizations](https://aws.amazon.com
 | AdministratorAccountName | String |          Audit           | Name of the AWS account to use for security operations                                                                                          |
 | ExecutionCount           | Number |            1             | Increment value to re-execute OrganizationSetup Lambda function                                                                                 |
 | EnableAIOptOutPolicy     | String |          false           | Optionally [opt-out](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out.html) of AI-service improvement |
+| SigningProfileVersionArn | String |          _None_          | Code Signing Profile Version ARN                                                                                                                |
 
 #### Installation
 
@@ -84,6 +85,10 @@ sam deploy --guided --signing-profiles OrganizationSetupFunction=OrganizationSet
 ## Clean up
 
 Deleting the CloudFormation Stack will remove the Lambda function and EventBridge rule. All of the administrator delegations will not be removed.
+
+```
+sam delete
+```
 
 ## Reference
 
