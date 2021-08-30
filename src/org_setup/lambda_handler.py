@@ -69,6 +69,9 @@ def setup_organization(
     org = organizations.describe_organization()
     org_id: str = org["Id"]
 
+    if not regions:
+        regions = EC2(session).get_all_regions()
+
     logger.info(
         f"[{primary_region}] Configuring organization {org_id} in regions: {regions}"
     )
@@ -106,9 +109,6 @@ def setup_organization(
 
     # Create organization IAM access analyzer in the administrator account
     AccessAnalyzer.create_org_analyzer(session, admin_account_id)
-
-    if not regions:
-        regions = EC2(session).get_all_regions()
 
     for region in regions:
 

@@ -98,6 +98,10 @@ Resources:
           Value: !Ref "AWS::StackId"
         - Key: "aws-cloudformation:logical-id"
           Value: OrganizationSetupFunctionRole
+        - Key: GITHUB_ORG
+          Value: "aws-samples"
+        - Key: GITHUB_REPO
+          Value: aws-control-tower-org-setup-sample
 
   CloudWatchLogsPolicy:
     Type: "AWS::IAM::Policy"
@@ -159,7 +163,10 @@ Resources:
       MemorySize: 128 # megabytes
       Role: !GetAtt OrganizationSetupFunctionRole.Arn
       Runtime: python3.9
-      Timeout: 30 # seconds
+      Tags:
+        GITHUB_ORG: aws-samples
+        GITHUB_REPO: aws-control-tower-org-setup-sample
+      Timeout: 600 # 10 minutes
 
   OrganizationSetup:
     Type: "Custom::OrganizationSetup"
