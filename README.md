@@ -79,7 +79,10 @@ git clone https://github.com/aws-samples/aws-control-tower-org-setup-sample
 cd aws-control-tower-org-setup-sample
 aws signer put-signing-profile --platform-id "AWSLambda-SHA384-ECDSA" --profile-name OrganizationSetupProfile
 sam build
-sam deploy --guided --signing-profiles OrganizationSetupFunction=OrganizationSetupProfile DependencyLayer=OrganizationSetupProfile
+sam deploy \
+  --guided \
+  --signing-profiles OrganizationSetupFunction=OrganizationSetupProfile \
+  --tags "GITHUB_ORG=aws-samples GITHUB_REPO=aws-control-tower-org-setup-sample"
 ```
 
 ## Clean up

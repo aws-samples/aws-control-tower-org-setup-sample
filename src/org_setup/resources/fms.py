@@ -42,6 +42,8 @@ class FMS:
             logger.debug(
                 f"[{self.region}] Enabled account {account_id} to be Firewall Manager admin account"
             )
+        except self.client.exceptions.InvalidOperationException:
+            logger.warn(f"[{self.region}] Firewall Manager admin account is not supported")
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "InternalErrorException":
                 logger.exception(
