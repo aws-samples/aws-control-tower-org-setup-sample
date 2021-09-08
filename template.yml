@@ -161,6 +161,7 @@ Resources:
                       - SUCCEEDED
       Handler: org_setup.lambda_handler.handler
       MemorySize: 128 # megabytes
+      ReservedConcurrentExecutions: 1
       Role: !GetAtt OrganizationSetupFunctionRole.Arn
       Runtime: python3.9
       Tags:
