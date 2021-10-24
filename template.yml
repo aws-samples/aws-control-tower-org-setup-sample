@@ -83,6 +83,7 @@ Resources:
                   - "ec2:DescribeRegions"
                   - "fms:AssociateAdminAccount"
                   - "guardduty:EnableOrganizationAdminAccount"
+                  - "macie2:EnableMacie"
                   - "macie2:EnableOrganizationAdminAccount"
                   - "ram:EnableSharingWithAwsOrganization"
                   - "securityhub:EnableOrganizationAdminAccount"

@@ -19,11 +19,11 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from typing import List, Dict
+
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
-
-from .sts import STS
 
 logger = Logger(child=True)
 
@@ -34,6 +34,24 @@ class Macie:
     def __init__(self, session: boto3.Session, region: str) -> None:
         self.client = session.client("macie2", region_name=region)
         self.region = region
+
+    def enable_macie(self) -> None:
+        """
+        Enable Macie
+
+        Executes in: management account in all regions
+        """
+
+        logger.info(f"[{self.region}] Enabling Macie")
+        try:
+            self.client.enable_macie(
+                findingPublishingFrequency="FIFTEEN_MINUTES", status="ENABLED"
+            )
+            logger.debug(f"[{self.region}] Enabled Macie")
+        except botocore.exceptions.ClientError as error:
+            if error.response["Error"]["Code"] != "ConflictException":
+                logger.exception(f"[{self.region}] Unable to enable Macie")
+                raise error
 
     def enable_organization_admin_account(self, account_id: str) -> None:
         """
@@ -66,3 +84,20 @@ class Macie:
 
         self.client.update_organization_configuration(autoEnable=True)
         logger.info(f"[{self.region}] Updated Macie to auto-enroll new accounts")
+
+    def create_members(self, accounts: List[Dict[str, str]]) -> None:
+        """
+        Create members in Macie
+        """
+        for account in accounts:
+            try:
+                self.client.create_member(
+                    account={
+                        "accountId": account["AccountId"],
+                        "email": account["Email"],
+                    }
+                )
+            except botocore.exceptions.ClientError as error:
+                if error.response["Error"]["Code"] != "ValidationException":
+                    logger.exception(f"[{self.region}] Unable to create Macie member")
+                    raise error

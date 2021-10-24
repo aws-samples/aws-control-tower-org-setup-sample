@@ -98,7 +98,9 @@ class GuardDuty:
 
         return detector_ids
 
-    def create_members(self, detector_ids: List[str], accounts: List[Dict[str, str]]) -> None:
+    def create_members(
+        self, detector_ids: List[str], accounts: List[Dict[str, str]]
+    ) -> None:
         """
         Create members in GuardDuty
         """

@@ -99,12 +99,17 @@ def setup_region(
         guardduty.create_members(detector_ids, accounts)
 
     # delegate Macie administration to the admin_account_id
-    Macie(management_session, region).enable_organization_admin_account(
-        admin_account_id
-    )
+    macie = Macie(management_session, region)
+    macie.enable_macie()
+    macie.enable_organization_admin_account(admin_account_id)
 
     # update the Macie organization configuration to register new accounts automatically
-    Macie(delegate_session, region).update_organization_configuration()
+    macie = Macie(delegate_session, region)
+    macie.enable_macie()
+    macie.update_organization_configuration()
+
+    if accounts:
+        macie.create_members(accounts)
 
     # Delegate Firewall Manager to the administrator account
     FMS(management_session, region).associate_admin_account(admin_account_id)
