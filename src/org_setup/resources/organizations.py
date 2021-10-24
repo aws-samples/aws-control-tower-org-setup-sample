@@ -50,7 +50,7 @@ class Organizations:
         try:
             response = self.client.describe_organization()
         except self.client.exceptions.AWSOrganizationsNotInUseException:
-            raise OrganizationNotFoundException("Organization Not Found")
+            raise OrganizationNotFoundException()
         except botocore.exceptions.ClientError:
             logger.exception(f"[{self.region} Unable to describe organization")
             raise
@@ -238,23 +238,26 @@ class Organizations:
                     logger.exception(f"[{self.region}] Unable to attach policy")
                     raise error
 
-    def register_delegated_administrator(
+    def register_delegated_administrators(
         self, account_id: str, principals: Iterable[str]
     ) -> None:
         """
         Register a delegated administrator
         """
 
+        if not principals:
+            return
+
         for principal in principals:
             logger.info(
-                f"[{self.region}] Registering {account_id} as a delegated administrator for {principal}"
+                f"[{self.region}] Delegating {principal} administration to account {account_id}"
             )
             try:
                 self.client.register_delegated_administrator(
                     AccountId=account_id, ServicePrincipal=principal
                 )
                 logger.debug(
-                    f"[{self.region}] Registered {account_id} as a delegated administrator for {principal}"
+                    f"[{self.region}] Delegated {principal} administration to account {account_id}"
                 )
             except botocore.exceptions.ClientError as error:
                 if (
@@ -262,7 +265,7 @@ class Organizations:
                     != "AccountAlreadyRegisteredException"
                 ):
                     logger.exception(
-                        f"[{self.region}] Unable to register {account_id} as a delegated administrator for {principal}"
+                        f"[{self.region}] Unable to delegate {principal} administration to account {account_id}"
                     )
                     raise error
 

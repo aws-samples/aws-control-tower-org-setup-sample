@@ -29,15 +29,27 @@ __all__ = ["ServiceCatalog"]
 
 
 class ServiceCatalog:
-    def __init__(self, session: boto3.Session) -> None:
-        self.client = session.client("servicecatalog")
+    def __init__(self, session: boto3.Session, region: str) -> None:
+        self.client = session.client("servicecatalog", region_name=region)
+        self.region = region
 
     def enable_aws_organizations_access(self) -> None:
-        logger.info("Enabling organizational access for ServiceCatalog")
+        """
+        Enable Service Catalog sharing with organization
+
+        Executes in: management account in all regions
+        """
+        logger.info(
+            f"[{self.region}] Enabling organizational access for Service Catalog"
+        )
         try:
             self.client.enable_aws_organizations_access()
-            logger.debug("Enabled organizational access for ServiceCatalog")
+            logger.debug(
+                f"[{self.region}] Enabled organizational access for Service Catalog"
+            )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "InvalidStateException":
-                logger.exception("Unable enable organization access for ServiceCatalog")
+                logger.exception(
+                    f"[{self.region}] Unable to enable organization access for Service Catalog"
+                )
                 raise error

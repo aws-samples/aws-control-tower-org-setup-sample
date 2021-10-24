@@ -29,15 +29,24 @@ __all__ = ["RAM"]
 
 
 class RAM:
-    def __init__(self, session: boto3.Session) -> None:
-        self.client = session.client("ram")
+    def __init__(self, session: boto3.Session, region: str) -> None:
+        self.client = session.client("ram", region_nane=region)
+        self.region = region
 
     def enable_sharing_with_aws_organization(self) -> None:
-        logger.info("Enabling RAM sharing with organization")
+        """
+        Enable Resource Access Manager sharing with organization
+
+        Executes in: management account in all regions
+        """
+
+        logger.info(f"[{self.region}] Enabling RAM sharing with organization")
         try:
             self.client.enable_sharing_with_aws_organization()
-            logger.debug("Enabled RAM sharing with organization")
+            logger.debug(f"[{self.region}] Enabled RAM sharing with organization")
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "OperationNotPermittedException":
-                logger.exception("Unable enable RAM sharing with organization")
+                logger.exception(
+                    f"[{self.region}] Unable enable RAM sharing with organization"
+                )
                 raise error

@@ -23,7 +23,6 @@ from aws_lambda_powertools import Logger
 import boto3
 import botocore
 
-from .sts import STS
 from ..constants import ORGANIZATION_ANALYZER_NAME
 
 logger = Logger(child=True)
@@ -32,35 +31,26 @@ __all__ = ["AccessAnalyzer"]
 
 
 class AccessAnalyzer:
-    def __init__(self, session: boto3.Session) -> None:
-        self.client = session.client("accessanalyzer")
+    def __init__(self, session: boto3.Session, region: str) -> None:
+        self.client = session.client("accessanalyzer", region_name=region)
+        self.region = region
 
-    def create_analyzer(self, analyzer_name: str, analyzer_type: str) -> None:
+    def create_org_analyzer(self) -> None:
         """
-        Create an IAM access analyzer
+        Create an organizational IAM access analyzer
+
+        Executes in: delegated administrator account
         """
 
+        logger.info(f"[{self.region}] Creating organizational IAM access analyzer")
         try:
-            self.client.create_analyzer(analyzerName=analyzer_name, type=analyzer_type)
+            self.client.create_analyzer(
+                analyzerName=ORGANIZATION_ANALYZER_NAME, type="ORGANIZATION"
+            )
+            logger.debug(f"[{self.region}] Created organizational IAM access analyzer")
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ConflictException":
-                logger.exception("Unable to create IAM access analyzer")
+                logger.exception(
+                    f"[{self.region}] Unable to create an organizational IAM access analyzer"
+                )
                 raise error
-
-    @classmethod
-    def create_org_analyzer(cls, session: boto3.Session, account_id: str) -> None:
-        """
-        Create an organization IAM access analyzer in the desired account
-        """
-
-        assumed_role_session = STS(session).assume_role(account_id, "accessanalyzer")
-
-        client = cls(assumed_role_session)
-
-        logger.info(
-            f"Creating organizational IAM access analyzer in account {account_id}"
-        )
-        client.create_analyzer(ORGANIZATION_ANALYZER_NAME, "ORGANIZATION")
-        logger.debug(
-            f"Created organizational IAM access analyzer in account {account_id}"
-        )

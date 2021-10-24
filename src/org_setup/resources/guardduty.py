@@ -32,46 +32,47 @@ __all__ = ["GuardDuty"]
 
 class GuardDuty:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.session = session
         self.client = session.client("guardduty", region_name=region)
         self.region = region
 
     def enable_organization_admin_account(self, account_id: str) -> None:
+        """
+        Delegate GuardDuty administration to an account
+
+        Executes in: management account in all regions
+        """
+
         logger.info(
-            f"[{self.region}] Enabling account {account_id} to be GuardDuty admin account"
+            f"[{self.region}] Delegating GuardDuty administration to account {account_id}"
         )
         try:
             self.client.enable_organization_admin_account(AdminAccountId=account_id)
             logger.debug(
-                f"[{self.region}] Enabled account {account_id} to be GuardDuty admin account"
+                f"[{self.region}] Delegated GuardDuty administration to account {account_id}"
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "BadRequestException":
                 logger.exception(
-                    f"[{self.region}] Unable to enable account {account_id} to be GuardDuty admin account"
+                    f"[{self.region}] Unable to delegate GuardDuty administration to account {account_id}"
                 )
                 raise error
 
-    def update_organization_configuration(self, account_id: str) -> None:
+    def create_detector(self) -> None:
         """
         Update the organization configuration to auto-enroll new accounts in GuardDuty
+
+        Executes in: delegated administrator account in all regions
         """
-
-        assumed_role_session = STS(self.session).assume_role(
-            account_id, "guardduty_org_config"
-        )
-
-        client = assumed_role_session.client("guardduty", region_name=self.region)
 
         detector_ids = []
 
-        paginator = client.get_paginator("list_detectors")
+        paginator = self.client.get_paginator("list_detectors")
         page_iterator = paginator.paginate()
         for page in page_iterator:
             detector_ids.extend(page.get("DetectorIds", []))
 
         if not detector_ids:
-            response = client.create_detector(
+            response = self.client.create_detector(
                 Enable=True,
                 DataSources={"S3Logs": {"Enable": True}},
                 FindingPublishingFrequency="SIX_HOURS",
@@ -79,8 +80,10 @@ class GuardDuty:
             detector_ids.append(response["DetectorId"])
 
         for detector_id in detector_ids:
-            client.update_organization_configuration(
+            self.client.update_organization_configuration(
                 DetectorId=detector_id,
                 AutoEnable=True,
                 DataSources={"S3Logs": {"AutoEnable": True}},
             )
+
+        logger.info(f"[{self.region} Updated GuardDuty to auto-enroll new accounts")

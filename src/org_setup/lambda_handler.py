@@ -22,7 +22,7 @@
 import os
 from typing import Dict, Any, List
 
-from aws_lambda_powertools import Logger, Tracer
+from aws_lambda_powertools import Logger
 from aws_lambda_powertools.utilities.typing import LambdaContext
 import boto3
 from crhelper import CfnResource
@@ -38,13 +38,13 @@ from .resources import (
     RAM,
     SecurityHub,
     ServiceCatalog,
+    STS,
 )
 
 helper = CfnResource(json_logging=True, log_level="INFO", boto_level="INFO")
+logger = Logger()
 
 try:
-    tracer = Tracer()
-    logger = Logger()
     REGIONS: List[str] = os.getenv("REGIONS", "").split(",")
     REGIONS = list(filter(None, REGIONS))  # remove empty strings
     ADMINISTRATOR_ACCOUNT_NAME: str = os.environ["ADMINISTRATOR_ACCOUNT_NAME"]
@@ -56,7 +56,6 @@ except Exception as exc:
     helper.init_failure(exc)
 
 
-@tracer.capture_method
 def setup_organization(
     primary_region: str, admin_account_id: str = None, regions: List[str] = None
 ) -> None:
@@ -64,13 +63,13 @@ def setup_organization(
     Set up the organization in multiple regions
     """
 
-    session = boto3.Session()
-    organizations = Organizations(session, primary_region)
+    management_session = boto3.Session()
+    organizations = Organizations(management_session, primary_region)
     org = organizations.describe_organization()
     org_id: str = org["Id"]
 
     if not regions:
-        regions = EC2(session).get_all_regions()
+        regions = EC2(management_session, primary_region).get_all_regions()
 
     logger.info(
         f"[{primary_region}] Configuring organization {org_id} in regions: {regions}"
@@ -86,14 +85,8 @@ def setup_organization(
         # attach an AI service opt-out policy
         organizations.attach_ai_optout_policy()
 
-    # enable Service Catalog access to the organization
-    ServiceCatalog(session).enable_aws_organizations_access()
-
     # enable various AWS service principal access to the organization
     organizations.enable_aws_service_access(SERVICE_ACCESS_PRINCIPALS)
-
-    # enable RAM sharing to the organization
-    RAM(session).enable_sharing_with_aws_organization()
 
     if not admin_account_id:
         admin_account_id = organizations.get_account_id(ADMINISTRATOR_ACCOUNT_NAME)
@@ -103,76 +96,75 @@ def setup_organization(
             )
             return
 
+    delegate_session = STS(management_session, primary_region).assume_role(
+        admin_account_id
+    )
+
     logger.info(
         f"[{primary_region}] Delegating IAM Access Analyzer administration to {admin_account_id}"
     )
 
     # Create organization IAM access analyzer in the administrator account
-    AccessAnalyzer.create_org_analyzer(session, admin_account_id)
+    AccessAnalyzer(delegate_session, primary_region).create_org_analyzer()
 
     for region in regions:
 
+        # enable Service Catalog organizational sharing
+        ServiceCatalog(management_session, region).enable_aws_organizations_access()
+
+        # enable RAM organizational sharing
+        RAM(management_session, region).enable_sharing_with_aws_organization()
+
         # Register the administrator account as a delegated administer on AWS services
-        org_regional = Organizations(session, region)
-        org_regional.register_delegated_administrator(
+        Organizations(management_session, region).register_delegated_administrators(
             admin_account_id, DELEGATED_ADMINISTRATOR_PRINCIPALS
         )
 
-        logger.info(
-            f"[{region}] Delegating Security Hub administration to {admin_account_id}"
-        )
-
-        securityhub = SecurityHub(session, region)
-
         # delegate SecurityHub administration to the administrator account
-        securityhub.enable_organization_admin_account(admin_account_id)
-
-        # update the SecurityHub organization configuration to register new accounts automatically
-        securityhub.update_organization_configuration(admin_account_id)
-
-        logger.info(
-            f"[{region}] Delegating GuardDuty administration to {admin_account_id}"
+        SecurityHub(management_session, region).enable_organization_admin_account(
+            admin_account_id
         )
 
-        guardduty = GuardDuty(session, region)
+        # update the SecurityHub organization configuration to register new accounts
+        # and security controls automatically
+        SecurityHub(delegate_session, region).update_configuration()
 
         # delegate GuardDuty administration to the administrator account
-        guardduty.enable_organization_admin_account(admin_account_id)
-
-        # update the GuartDuty organization configuration to register new accounts automatically
-        guardduty.update_organization_configuration(admin_account_id)
-
-        logger.info(f"[{region}] Delegating Macie administration to {admin_account_id}")
-
-        macie = Macie(session, region)
-
-        # delegate Macie administration to the admin_account_id
-        macie.enable_organization_admin_account(admin_account_id)
-
-        # update the Macie organization configuration to register new accounts automatically
-        macie.update_organization_configuration(admin_account_id)
-
-        logger.info(
-            f"[{region}] Delegating Firewall Manager administration to {admin_account_id}"
+        GuardDuty(management_session, region).enable_organization_admin_account(
+            admin_account_id
         )
 
+        # Create a detector in the administrator account
+        GuardDuty(delegate_session, region).create_detector()
+
+        # delegate Macie administration to the admin_account_id
+        Macie(management_session, region).enable_organization_admin_account(
+            admin_account_id
+        )
+
+        # update the Macie organization configuration to register new accounts automatically
+        Macie(delegate_session, region).update_organization_configuration()
+
         # Delegate Firewall Manager to the administrator account
-        FMS(session, region).associate_admin_account(admin_account_id)
+        FMS(management_session, region).associate_admin_account(admin_account_id)
+
+    # Aggregate Security Hub findings into primary region
+    SecurityHub(delegate_session, primary_region).create_finding_aggregator()
 
 
 @helper.create
 @helper.update
 def create(event: Dict[str, Any], context: LambdaContext) -> bool:
-    logger.info("Got Create or Update")
+    logger.debug("Got Create or Update")
     setup_organization(primary_region=PRIMARY_REGION, regions=REGIONS)
 
 
 @helper.delete
 def delete(event: Dict[str, Any], context: LambdaContext) -> None:
-    logger.info("Got Delete")
+    # Ignore deletion event
+    return
 
 
-@tracer.capture_lambda_handler
 @logger.inject_lambda_context(log_event=True)
 def handler(event: Dict[str, Any], context: LambdaContext) -> None:
 
@@ -192,6 +184,10 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> None:
                 admin_account_id = account["accountId"]
                 break
 
-        return setup_organization(primary_region, admin_account_id, REGIONS)
+        return setup_organization(
+            primary_region=primary_region,
+            admin_account_id=admin_account_id,
+            regions=REGIONS,
+        )
 
     helper(event, context)
