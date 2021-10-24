@@ -19,11 +19,11 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from typing import List, Dict
+
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
-
-from .sts import STS
 
 logger = Logger(child=True)
 
@@ -64,11 +64,9 @@ class SecurityHub:
         Executes in: delegated administrator account in each region
         """
 
-        self.logger.info(
-            f"[{self.region}] Auto-enrolling new accounts with SecurityHub"
-        )
+        logger.info(f"[{self.region}] Auto-enrolling new accounts with SecurityHub")
         self.client.update_organization_configuration(AutoEnable=True)
-        self.logger.info(f"[{self.region}] Auto-enable new security controls")
+        logger.info(f"[{self.region}] Auto-enable new security controls")
         self.client.update_security_hub_configuration(AutoEnableControls=True)
 
     def create_finding_aggregator(self) -> None:
@@ -78,14 +76,22 @@ class SecurityHub:
         Executes in: delegated administrator account in primary region
         """
 
-        # TODO: check for existing aggregators before creating a new one
+        response = self.client.list_finding_aggregators()
+        aggregators = response["FindingAggregators"]
 
-        logger.info(f"[{self.region}] Creating SecurityHub finding aggregator")
-        try:
-            self.client.create_finding_aggregator(RegionLinkingMode="ALL_REGIONS")
-            logger.debug(f"[{self.region}] Created SecurityHub finding aggregator")
-        except botocore.exceptions.ClientError:
-            logger.exception(
-                f"[{self.region}] Unable to create SecurityHub finding aggregator"
-            )
-            raise
+        if not aggregators:
+            logger.info(f"[{self.region}] Creating SecurityHub finding aggregator")
+            try:
+                self.client.create_finding_aggregator(RegionLinkingMode="ALL_REGIONS")
+                logger.debug(f"[{self.region}] Created SecurityHub finding aggregator")
+            except botocore.exceptions.ClientError:
+                logger.exception(
+                    f"[{self.region}] Unable to create SecurityHub finding aggregator"
+                )
+                raise
+
+    def create_members(self, accounts: List[Dict[str, str]]) -> None:
+        """
+        Create members in Securityhub
+        """
+        self.client.create_members(AccountDetails=accounts)

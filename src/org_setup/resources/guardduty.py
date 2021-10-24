@@ -19,11 +19,11 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from typing import List, Dict
+
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
-
-from .sts import STS
 
 logger = Logger(child=True)
 
@@ -57,7 +57,7 @@ class GuardDuty:
                 )
                 raise error
 
-    def create_detector(self) -> None:
+    def create_detector(self) -> List[str]:
         """
         Update the organization configuration to auto-enroll new accounts in GuardDuty
 
@@ -71,11 +71,19 @@ class GuardDuty:
         for page in page_iterator:
             detector_ids.extend(page.get("DetectorIds", []))
 
-        if not detector_ids:
+        if detector_ids:
+            for detector_id in detector_ids:
+                self.client.update_detector(
+                    DetectorId=detector_id,
+                    Enable=True,
+                    FindingPublishingFrequency="FIFTEEN_MINUTES",
+                    DataSources={"S3Logs": {"Enable": True}},
+                )
+        else:
             response = self.client.create_detector(
                 Enable=True,
                 DataSources={"S3Logs": {"Enable": True}},
-                FindingPublishingFrequency="SIX_HOURS",
+                FindingPublishingFrequency="FIFTEEN_MINUTES",
             )
             detector_ids.append(response["DetectorId"])
 
@@ -86,4 +94,13 @@ class GuardDuty:
                 DataSources={"S3Logs": {"AutoEnable": True}},
             )
 
-        logger.info(f"[{self.region} Updated GuardDuty to auto-enroll new accounts")
+        logger.info(f"[{self.region}] Updated GuardDuty to auto-enroll new accounts")
+
+        return detector_ids
+
+    def create_members(self, detector_ids: List[str], accounts: List[Dict[str, str]]) -> None:
+        """
+        Create members in GuardDuty
+        """
+        for detector_id in detector_ids:
+            self.client.create_members(DetectorId=detector_id, AccountDetails=accounts)

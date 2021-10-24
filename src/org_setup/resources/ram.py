@@ -30,7 +30,7 @@ __all__ = ["RAM"]
 
 class RAM:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("ram", region_nane=region)
+        self.client = session.client("ram", region_name=region)
         self.region = region
 
     def enable_sharing_with_aws_organization(self) -> None:

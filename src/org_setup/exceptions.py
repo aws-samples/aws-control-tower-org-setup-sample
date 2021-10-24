@@ -19,8 +19,12 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ["OrganizationNotFoundException"]
+__all__ = ["OrganizationNotFoundError", "AdministratorAccountNotFoundError"]
 
 
-class OrganizationNotFoundException(Exception):
+class OrganizationNotFoundError(Exception):
+    pass
+
+
+class AdministratorAccountNotFoundError(Exception):
     pass

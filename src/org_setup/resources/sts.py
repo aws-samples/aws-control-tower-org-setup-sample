@@ -31,9 +31,8 @@ __all__ = ["STS"]
 
 
 class STS:
-    def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("sts", region_name=region)
-        self.region = region
+    def __init__(self, session: boto3.Session) -> None:
+        self.client = session.client("sts")
 
     def assume_role(
         self, account_id: str, role_session_name: str = "OrganizationSetup"
@@ -44,9 +43,7 @@ class STS:
 
         role_arn = f"arn:aws:iam::{account_id}:role/{EXECUTION_ROLE_NAME}"
 
-        logger.info(
-            f"[{self.region}] Assuming role {EXECUTION_ROLE_NAME} in {account_id}"
-        )
+        logger.info(f"Assuming role {EXECUTION_ROLE_NAME} in {account_id}")
         response = self.client.assume_role(
             RoleArn=role_arn,
             RoleSessionName=role_session_name,
@@ -59,5 +56,4 @@ class STS:
             aws_access_key_id=credentials["AccessKeyId"],
             aws_secret_access_key=credentials["SecretAccessKey"],
             aws_session_token=credentials["SessionToken"],
-            region_name=self.region,
         )
