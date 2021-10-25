@@ -43,6 +43,7 @@ class STS:
 
         role_arn = f"arn:aws:iam::{account_id}:role/{EXECUTION_ROLE_NAME}"
 
+        logger.info(f"Assuming role {EXECUTION_ROLE_NAME} in {account_id}")
         response = self.client.assume_role(
             RoleArn=role_arn,
             RoleSessionName=role_session_name,

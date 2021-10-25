@@ -30,12 +30,12 @@ __all__ = ["EC2"]
 
 
 class EC2:
-    def __init__(self, session: boto3.Session) -> None:
-        self.client = session.client("ec2")
+    def __init__(self, session: boto3.Session, region: str) -> None:
+        self.client = session.client("ec2", region_name=region)
 
     def get_all_regions(self) -> List[str]:
         """
-        Return all regions
+        Return all regions that don't require opt-in
         """
         regions = [
             region["RegionName"]

@@ -21,14 +21,19 @@
 
 from functools import lru_cache
 import json
-from typing import List, Dict, Optional, Iterable, Any
+from typing import List, Dict, Optional, Any
 
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
 
-from ..constants import AI_OPT_OUT_POLICY_NAME, AI_OPT_OUT_POLICY
-from ..exceptions import OrganizationNotFoundException
+from ..constants import (
+    AI_OPT_OUT_POLICY_NAME,
+    AI_OPT_OUT_POLICY,
+    DELEGATED_ADMINISTRATOR_PRINCIPALS,
+    SERVICE_ACCESS_PRINCIPALS,
+)
+from ..exceptions import OrganizationNotFoundError
 
 logger = Logger(child=True)
 
@@ -37,9 +42,15 @@ __all__ = ["Organizations"]
 
 
 class Organizations:
-    def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("organizations", region_name=region)
-        self.region = region
+    def __init__(self, session: boto3.Session) -> None:
+        # must use us-east-1 region with Organizations
+        # see https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/organizations.html#client
+        self.client = session.client(
+            "organizations",
+            region_name="us-east-1",
+            endpoint_url="https://organizations.us-east-1.amazonaws.com",
+        )
+        self.region = "us-east-1"
         self._roots = []
         self._accounts = []
 
@@ -50,9 +61,9 @@ class Organizations:
         try:
             response = self.client.describe_organization()
         except self.client.exceptions.AWSOrganizationsNotInUseException:
-            raise OrganizationNotFoundException("Organization Not Found")
+            raise OrganizationNotFoundError()
         except botocore.exceptions.ClientError:
-            logger.exception(f"[{self.region} Unable to describe organization")
+            logger.exception(f"[{self.region}] Unable to describe organization")
             raise
         return response["Organization"]
 
@@ -122,11 +133,11 @@ class Organizations:
                 )
                 raise
 
-    def enable_aws_service_access(self, principals: Iterable[str]) -> None:
+    def enable_aws_service_access(self) -> None:
         """
         Enable AWS service access in organization
         """
-        for principal in principals:
+        for principal in SERVICE_ACCESS_PRINCIPALS:
             logger.info(f"[{self.region}] Enabling AWS service access for {principal}")
             try:
                 self.client.enable_aws_service_access(ServicePrincipal=principal)
@@ -184,7 +195,9 @@ class Organizations:
 
         for policy in self.list_policies("AISERVICES_OPT_OUT_POLICY"):
             if policy["Name"] == AI_OPT_OUT_POLICY_NAME:
-                logger.info(f"Found existing {AI_OPT_OUT_POLICY_NAME} policy")
+                logger.info(
+                    f"[{self.region}] Found existing {AI_OPT_OUT_POLICY_NAME} policy"
+                )
                 return policy["Id"]
 
         logger.info(
@@ -238,23 +251,21 @@ class Organizations:
                     logger.exception(f"[{self.region}] Unable to attach policy")
                     raise error
 
-    def register_delegated_administrator(
-        self, account_id: str, principals: Iterable[str]
-    ) -> None:
+    def register_delegated_administrators(self, account_id: str) -> None:
         """
-        Register a delegated administrator
+        Register delegated administrators
         """
 
-        for principal in principals:
+        for principal in DELEGATED_ADMINISTRATOR_PRINCIPALS:
             logger.info(
-                f"[{self.region}] Registering {account_id} as a delegated administrator for {principal}"
+                f"[{self.region}] Delegating {principal} administration to account {account_id}"
             )
             try:
                 self.client.register_delegated_administrator(
                     AccountId=account_id, ServicePrincipal=principal
                 )
                 logger.debug(
-                    f"[{self.region}] Registered {account_id} as a delegated administrator for {principal}"
+                    f"[{self.region}] Delegated {principal} administration to account {account_id}"
                 )
             except botocore.exceptions.ClientError as error:
                 if (
@@ -262,7 +273,7 @@ class Organizations:
                     != "AccountAlreadyRegisteredException"
                 ):
                     logger.exception(
-                        f"[{self.region}] Unable to register {account_id} as a delegated administrator for {principal}"
+                        f"[{self.region}] Unable to delegate {principal} administration to account {account_id}"
                     )
                     raise error
 
