@@ -30,9 +30,11 @@ from crhelper import CfnResource
 
 from .resources import (
     AccessAnalyzer,
+    Detective,
     EC2,
     FMS,
     GuardDuty,
+    Inspector,
     Macie,
     Organizations,
     RAM,
@@ -50,16 +52,12 @@ try:
     REGIONS = list(filter(None, REGIONS))  # remove empty strings
     ADMINISTRATOR_ACCOUNT_NAME: str = os.environ["ADMINISTRATOR_ACCOUNT_NAME"]
     PRIMARY_REGION: str = os.environ["PRIMARY_REGION"]
-    ENABLE_AI_OPTOUT_POLICY: bool = (
-        os.getenv("ENABLE_AI_OPTOUT_POLICY", False) == "true"
-    )
+    ENABLE_AI_OPTOUT_POLICY: bool = os.getenv("ENABLE_AI_OPTOUT_POLICY", False) == "true"
 except Exception as exc:
     helper.init_failure(exc)
 
 
-def setup_region(
-    admin_account_id: str, region: str, accounts: List[Dict[str, str]] = None
-) -> None:
+def setup_region(admin_account_id: str, region: str, accounts: List[Dict[str, str]] = None) -> None:
     """
     Configure services in a region
     """
@@ -74,9 +72,7 @@ def setup_region(
     RAM(management_session, region).enable_sharing_with_aws_organization()
 
     # delegate SecurityHub administration to the administrator account
-    SecurityHub(management_session, region).enable_organization_admin_account(
-        admin_account_id
-    )
+    SecurityHub(management_session, region).enable_organization_admin_account(admin_account_id)
 
     # update the SecurityHub organization configuration to register new accounts
     # and security controls automatically
@@ -87,9 +83,7 @@ def setup_region(
         securityhub.create_members(accounts)
 
     # delegate GuardDuty administration to the administrator account
-    GuardDuty(management_session, region).enable_organization_admin_account(
-        admin_account_id
-    )
+    GuardDuty(management_session, region).enable_organization_admin_account(admin_account_id)
 
     # Create a detector in the administrator account
     guardduty = GuardDuty(delegate_session, region)
@@ -114,6 +108,12 @@ def setup_region(
     # Delegate Firewall Manager to the administrator account
     FMS(management_session, region).associate_admin_account(admin_account_id)
 
+    # Delegate Detective to the administrator account
+    # Detective(management_session, region).enable_organization_admin_account(admin_account_id)
+
+    # Delegate Inspector to the administrator account
+    Inspector(management_session, region).enable_delegated_admin_account(admin_account_id)
+
     # Create organization IAM access analyzer in the administrator account
     AccessAnalyzer(delegate_session, region).create_org_analyzer()
 
@@ -133,9 +133,7 @@ def setup_organization(
     if not regions:
         regions = EC2(management_session, primary_region).get_all_regions()
 
-    logger.info(
-        f"[{primary_region}] Configuring organization {org_id} in regions: {regions}"
-    )
+    logger.info(f"[{primary_region}] Configuring organization {org_id} in regions: {regions}")
 
     # enable all organizational features
     organizations.enable_all_features()

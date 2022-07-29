@@ -24,6 +24,7 @@ from typing import List, Dict
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
+from botocore.config import Config
 
 logger = Logger(child=True)
 
@@ -32,7 +33,13 @@ __all__ = ["Macie"]
 
 class Macie:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("macie2", region_name=region)
+        config = Config(
+            retries={
+                "max_attempts": 10,
+                "mode": "standard",
+            }
+        )
+        self.client = session.client("macie2", region_name=region, config=config)
         self.region = region
 
     def enable_macie(self) -> None:
@@ -44,9 +51,7 @@ class Macie:
 
         logger.info(f"[{self.region}] Enabling Macie")
         try:
-            self.client.enable_macie(
-                findingPublishingFrequency="FIFTEEN_MINUTES", status="ENABLED"
-            )
+            self.client.enable_macie(findingPublishingFrequency="FIFTEEN_MINUTES", status="ENABLED")
             logger.debug(f"[{self.region}] Enabled Macie")
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ConflictException":
@@ -60,14 +65,10 @@ class Macie:
         Executes in: management account in all regions
         """
 
-        logger.info(
-            f"[{self.region}] Delegating Macie administration to account {account_id}"
-        )
+        logger.info(f"[{self.region}] Delegating Macie administration to account {account_id}")
         try:
             self.client.enable_organization_admin_account(adminAccountId=account_id)
-            logger.debug(
-                f"[{self.region}] Delegated Macie administration to account {account_id}"
-            )
+            logger.debug(f"[{self.region}] Delegated Macie administration to account {account_id}")
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ConflictException":
                 logger.exception(

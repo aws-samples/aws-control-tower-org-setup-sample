@@ -124,13 +124,8 @@ class Organizations:
             self.client.enable_all_features()
             logger.debug(f"[{self.region}] Enabled all features in organization")
         except botocore.exceptions.ClientError as error:
-            if (
-                error.response["Error"]["Code"]
-                != "HandshakeConstraintViolationException"
-            ):
-                logger.exception(
-                    f"[{self.region}] Unable to enable all features in organization"
-                )
+            if error.response["Error"]["Code"] != "HandshakeConstraintViolationException":
+                logger.exception(f"[{self.region}] Unable to enable all features in organization")
                 raise
 
     def enable_aws_service_access(self) -> None:
@@ -141,9 +136,7 @@ class Organizations:
             logger.info(f"[{self.region}] Enabling AWS service access for {principal}")
             try:
                 self.client.enable_aws_service_access(ServicePrincipal=principal)
-                logger.debug(
-                    f"[{self.region}] Enabled AWS service access for {principal}"
-                )
+                logger.debug(f"[{self.region}] Enabled AWS service access for {principal}")
             except botocore.exceptions.ClientError as error:
                 if error.response["Error"]["Code"] != "ServiceException":
                     logger.exception(
@@ -170,20 +163,13 @@ class Organizations:
                     f"[{self.region}] Enabling policy type {disabled_type} on root {root_id}"
                 )
                 try:
-                    self.client.enable_policy_type(
-                        RootId=root_id, PolicyType=disabled_type
-                    )
+                    self.client.enable_policy_type(RootId=root_id, PolicyType=disabled_type)
                     logger.debug(
                         f"[{self.region}] Enabled policy type {disabled_type} on root {root_id}"
                     )
                 except botocore.exceptions.ClientError as error:
-                    if (
-                        error.response["Error"]["Code"]
-                        != "PolicyTypeAlreadyEnabledException"
-                    ):
-                        logger.exception(
-                            f"[{self.region}] Unable to enable policy type"
-                        )
+                    if error.response["Error"]["Code"] != "PolicyTypeAlreadyEnabledException":
+                        logger.exception(f"[{self.region}] Unable to enable policy type")
                         raise error
 
         logger.debug(f"[{self.region}] Enabled all policy types in organization")
@@ -195,14 +181,10 @@ class Organizations:
 
         for policy in self.list_policies("AISERVICES_OPT_OUT_POLICY"):
             if policy["Name"] == AI_OPT_OUT_POLICY_NAME:
-                logger.info(
-                    f"[{self.region}] Found existing {AI_OPT_OUT_POLICY_NAME} policy"
-                )
+                logger.info(f"[{self.region}] Found existing {AI_OPT_OUT_POLICY_NAME} policy")
                 return policy["Id"]
 
-        logger.info(
-            f"[{self.region}] {AI_OPT_OUT_POLICY_NAME} policy not found, creating"
-        )
+        logger.info(f"[{self.region}] {AI_OPT_OUT_POLICY_NAME} policy not found, creating")
 
         try:
             response = self.client.create_policy(
@@ -212,9 +194,7 @@ class Organizations:
                 Type="AISERVICES_OPT_OUT_POLICY",
             )
             policy_id = response.get("Policy", {}).get("PolicySummary", {}).get("Id")
-            logger.debug(
-                f"[{self.region}] Created policy {AI_OPT_OUT_POLICY_NAME} ({policy_id})"
-            )
+            logger.debug(f"[{self.region}] Created policy {AI_OPT_OUT_POLICY_NAME} ({policy_id})")
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] == "DuplicatePolicyException":
                 return self.get_ai_optout_policy()
@@ -228,9 +208,7 @@ class Organizations:
         """
         policy_id = self.get_ai_optout_policy()
         if not policy_id:
-            logger.warn(
-                f"[{self.region}] Unable to find {AI_OPT_OUT_POLICY_NAME} policy"
-            )
+            logger.warn(f"[{self.region}] Unable to find {AI_OPT_OUT_POLICY_NAME} policy")
             return
 
         for root in self.list_roots():
@@ -244,10 +222,7 @@ class Organizations:
                     f"[{self.region}] Attached {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}"
                 )
             except botocore.exceptions.ClientError as error:
-                if (
-                    error.response["Error"]["Code"]
-                    != "DuplicatePolicyAttachmentException"
-                ):
+                if error.response["Error"]["Code"] != "DuplicatePolicyAttachmentException":
                     logger.exception(f"[{self.region}] Unable to attach policy")
                     raise error
 
@@ -268,10 +243,7 @@ class Organizations:
                     f"[{self.region}] Delegated {principal} administration to account {account_id}"
                 )
             except botocore.exceptions.ClientError as error:
-                if (
-                    error.response["Error"]["Code"]
-                    != "AccountAlreadyRegisteredException"
-                ):
+                if error.response["Error"]["Code"] != "AccountAlreadyRegisteredException":
                     logger.exception(
                         f"[{self.region}] Unable to delegate {principal} administration to account {account_id}"
                     )

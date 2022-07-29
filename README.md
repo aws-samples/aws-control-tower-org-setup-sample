@@ -23,6 +23,8 @@ This project configures the following [AWS Organizations](https://aws.amazon.com
 - [AWS Firewall Manager](https://aws.amazon.com/firewall-manager/)
 - [Amazon Macie](https://aws.amazon.com/macie/)
 - [AWS IAM Access Analyzer](https://aws.amazon.com/iam/features/analyze-access/)
+- [Amazon Inspector](https://aws.amazon.com/inspector/)
+- [Amazon Detective](https://aws.amazon.com/detective/)
 
 2. Enables organizational sharing for [AWS Service Catalog](https://aws.amazon.com/servicecatalog/) and [AWS Resource Access Manager](https://aws.amazon.com/ram/) (RAM)
 3. Optionally, configures an [AI opt-out policy](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out.html) at the organization root
@@ -56,6 +58,8 @@ This project configures the following [AWS Organizations](https://aws.amazon.com
 - [AWS Service Catalog](https://aws.amazon.com/servicecatalog/) - AWS Service Catalog allows organizations to create and manage catalogs of IT services that are approved for use on AWS.
 - [AWS Resource Access Manager](https://aws.amazon.com/ram/) - AWS Resource Access Manager (RAM) helps you securely share your resources across AWS accounts, within your organization or organizational units (OUs) in AWS Organizations, and with IAM roles and IAM users for supported resource types.
 - [AWS IAM Access Analyzer](https://aws.amazon.com/iam/features/analyze-access/) - IAM Access Analyzer helps you review existing access so that you can identify and remove unintended external or unused permissions.
+- [Amazon Inspector](https://aws.amazon.com/inspector/) - Amazon Inspector is an automated vulnerability management service that continually scans AWS workloads for software vulnerabilities and unintended network exposure.
+- [Amazon Detective](https://aws.amazon.com/detective/) - Amazon Detective makes it easy to analyze, investigate, and quickly identify the root cause of potential security issues or suspicious activities.
 
 ## Usage
 

@@ -24,6 +24,8 @@ from typing import List, Dict
 
 import boto3
 
+AWS_PROFILE = "root-admin"
+
 
 def get_current_account(session: boto3.Session) -> str:
     client = session.client("sts")
@@ -62,15 +64,13 @@ def get_regions(session: boto3.Session) -> List[str]:
 def assume_role(session: boto3.Session, account_id: str) -> Dict[str, str]:
     role_arn = f"arn:aws:iam::{account_id}:role/AWSControlTowerExecution"
     client = session.client("sts")
-    response = client.assume_role(
-        RoleArn=role_arn, RoleSessionName="disable_security_hub"
-    )
+    response = client.assume_role(RoleArn=role_arn, RoleSessionName="disable_security_hub")
     credentials = response["Credentials"]
     return credentials
 
 
 def disable_security_hub(
-    account_id: str, region: str, credentials: Dict[str, str] = None, session=None
+    account_id: str, region: str, credentials: Dict[str, str] = None, session: boto3.Session = None
 ):
     if credentials:
         assumed_session = boto3.Session(
@@ -99,13 +99,11 @@ def disable_security_hub(
 
     client.batch_disable_standards(StandardsSubscriptionArns=standard_subscription_arns)
 
-    print(
-        f"Disabled {len(standard_subscription_arns)} standards in {account_id} {region}"
-    )
+    print(f"Disabled {len(standard_subscription_arns)} standards in {account_id} {region}")
 
 
 def main():
-    session = boto3.Session(profile_name="root-admin")
+    session = boto3.Session(profile_name=AWS_PROFILE)
 
     current_account_id = get_current_account(session)
     account_ids = get_accounts(session)

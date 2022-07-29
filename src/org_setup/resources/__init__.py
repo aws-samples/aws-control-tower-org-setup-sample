@@ -20,9 +20,11 @@
 """
 
 from .accessanalyzer import AccessAnalyzer
+from .detective import Detective
 from .ec2 import EC2
 from .fms import FMS
 from .guardduty import GuardDuty
+from .inspector import Inspector
 from .macie import Macie
 from .organizations import Organizations
 from .ram import RAM
@@ -32,9 +34,11 @@ from .sts import STS
 
 __all__ = [
     "AccessAnalyzer",
+    "Detective",
     "EC2",
     "FMS",
     "GuardDuty",
+    "Inspector",
     "Macie",
     "Organizations",
     "RAM",
