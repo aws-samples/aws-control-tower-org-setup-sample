@@ -96,7 +96,23 @@ class GuardDuty:
             self.client.update_organization_configuration(
                 DetectorId=detector_id,
                 AutoEnable=True,
-                DataSources={"S3Logs": {"AutoEnable": True}},
+                DataSources={
+                    "S3Logs": {
+                        "AutoEnable": True,
+                    },
+                    "Kubernetes": {
+                        "AuditLogs": {
+                            "AutoEnable": True,
+                        }
+                    },
+                    "MalwareProtection": {
+                        "ScanEc2InstanceWithFindings": {
+                            "EbsVolumes": {
+                                "AutoEnable": True,
+                            }
+                        }
+                    },
+                },
             )
 
         logger.info(f"[{self.region}] Updated GuardDuty to auto-enroll new accounts")
