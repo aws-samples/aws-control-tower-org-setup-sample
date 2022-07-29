@@ -46,7 +46,5 @@ class RAM:
             logger.debug(f"[{self.region}] Enabled RAM sharing with organization")
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "OperationNotPermittedException":
-                logger.exception(
-                    f"[{self.region}] Unable enable RAM sharing with organization"
-                )
+                logger.exception(f"[{self.region}] Unable enable RAM sharing with organization")
                 raise error

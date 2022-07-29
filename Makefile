@@ -21,4 +21,4 @@ clean:
 	sam delete
 
 format:
-	.venv/bin/black -t py39 .
+	.venv/bin/black -t py39 --line-length 100 .

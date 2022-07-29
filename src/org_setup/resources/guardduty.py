@@ -24,6 +24,7 @@ from typing import List, Dict
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
+from botocore.config import Config
 
 logger = Logger(child=True)
 
@@ -32,7 +33,13 @@ __all__ = ["GuardDuty"]
 
 class GuardDuty:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("guardduty", region_name=region)
+        config = Config(
+            retries={
+                "max_attempts": 10,
+                "mode": "standard",
+            }
+        )
+        self.client = session.client("guardduty", region_name=region, config=config)
         self.region = region
 
     def enable_organization_admin_account(self, account_id: str) -> None:
@@ -42,9 +49,7 @@ class GuardDuty:
         Executes in: management account in all regions
         """
 
-        logger.info(
-            f"[{self.region}] Delegating GuardDuty administration to account {account_id}"
-        )
+        logger.info(f"[{self.region}] Delegating GuardDuty administration to account {account_id}")
         try:
             self.client.enable_organization_admin_account(AdminAccountId=account_id)
             logger.debug(
@@ -98,9 +103,7 @@ class GuardDuty:
 
         return detector_ids
 
-    def create_members(
-        self, detector_ids: List[str], accounts: List[Dict[str, str]]
-    ) -> None:
+    def create_members(self, detector_ids: List[str], accounts: List[Dict[str, str]]) -> None:
         """
         Create members in GuardDuty
         """

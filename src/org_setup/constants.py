@@ -52,7 +52,10 @@ SERVICE_ACCESS_PRINCIPALS: Set[str] = frozenset(
         "backup.amazonaws.com",
         "config.amazonaws.com",
         "config-multiaccountsetup.amazonaws.com",
+        "detective.amazonaws.com",
         "guardduty.amazonaws.com",
+        "inspector2.amazonaws.com",
+        "malware-protection.guardduty.amazonaws.com",
         "securityhub.amazonaws.com",
         "macie.amazonaws.com",
     }
@@ -62,7 +65,9 @@ DELEGATED_ADMINISTRATOR_PRINCIPALS: Set[str] = frozenset(
     {
         "access-analyzer.amazonaws.com",
         "config-multiaccountsetup.amazonaws.com",
+        "detective.amazonaws.com",
         "guardduty.amazonaws.com",
+        "inspector2.amazonaws.com",
         "securityhub.amazonaws.com",
         "macie.amazonaws.com",
         "storage-lens.s3.amazonaws.com",

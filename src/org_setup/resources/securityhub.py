@@ -85,9 +85,7 @@ class SecurityHub:
                 self.client.create_finding_aggregator(RegionLinkingMode="ALL_REGIONS")
                 logger.debug(f"[{self.region}] Created SecurityHub finding aggregator")
             except botocore.exceptions.ClientError:
-                logger.exception(
-                    f"[{self.region}] Unable to create SecurityHub finding aggregator"
-                )
+                logger.exception(f"[{self.region}] Unable to create SecurityHub finding aggregator")
                 raise
 
     def create_members(self, accounts: List[Dict[str, str]]) -> None:

@@ -39,12 +39,22 @@ Resources:
     Type: "AWS::Logs::LogGroup"
     UpdateReplacePolicy: Delete
     DeletionPolicy: Delete
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W84
+            reason: "Ignore KMS key"
     Properties:
       LogGroupName: !Sub "/aws/lambda/${OrganizationSetupFunction}"
       RetentionInDays: 3
 
   OrganizationSetupFunctionRole:
     Type: "AWS::IAM::Role"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W11
+            reason: "Ignore * in resource policy"
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -80,15 +90,30 @@ Resources:
                 Resource: "*"
               - Effect: Allow
                 Action:
+                  - "detective:EnableOrganizationAdminAccount"
                   - "ec2:DescribeRegions"
                   - "fms:AssociateAdminAccount"
                   - "guardduty:EnableOrganizationAdminAccount"
+                  - "inspector2:Enable"
+                  - "inspector2:EnableDelegatedAdminAccount"
                   - "macie2:EnableMacie"
                   - "macie2:EnableOrganizationAdminAccount"
                   - "ram:EnableSharingWithAwsOrganization"
                   - "securityhub:EnableOrganizationAdminAccount"
                   - "servicecatalog:EnableAWSOrganizationsAccess"
                 Resource: "*"
+              - Effect: Allow
+                Action: "iam:CreateServiceLinkedRole"
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/detective.${AWS::URLSuffix}/AWSServiceRoleForDetective"
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/ram.${AWS::URLSuffix}/AWSServiceRoleForResourceAccessManager"
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/inspector2.${AWS::URLSuffix}/AWSServiceRoleForAmazonInspector2"
+                Condition:
+                  StringLike:
+                    "iam:AWSServiceName":
+                      - !Sub "detective.${AWS::URLSuffix}"
+                      - !Sub "ram.${AWS::URLSuffix}"
+                      - !Sub "inspector2.${AWS::URLSuffix}"
               - Effect: Allow
                 Action: "sts:AssumeRole"
                 Resource: !Sub "arn:${AWS::Partition}:iam::*:role/AWSControlTowerExecution"
@@ -131,6 +156,13 @@ Resources:
 
   OrganizationSetupFunction:
     Type: "AWS::Serverless::Function"
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W58
+            reason: "Ignore CloudWatch Logs write"
+          - id: W89
+            reason: "Ignore VPC"
     Properties:
       CodeSigningConfigArn: !Ref CodeSigningConfig
       CodeUri: src/

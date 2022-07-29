@@ -25,27 +25,30 @@ import botocore
 
 logger = Logger(child=True)
 
-__all__ = ["ServiceCatalog"]
+__all__ = ["Detective"]
 
 
-class ServiceCatalog:
+class Detective:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("servicecatalog", region_name=region)
+        self.client = session.client("detective", region_name=region)
         self.region = region
 
-    def enable_aws_organizations_access(self) -> None:
+    def enable_organization_admin_account(self, account_id: str) -> None:
         """
-        Enable Service Catalog sharing with organization
+        Delegate Detective administration to an account
 
         Executes in: management account in all regions
         """
-        logger.info(f"[{self.region}] Enabling organizational access for Service Catalog")
+
+        logger.info(f"[{self.region}] Delegating Detective administration to account {account_id}")
         try:
-            self.client.enable_aws_organizations_access()
-            logger.debug(f"[{self.region}] Enabled organizational access for Service Catalog")
+            self.client.enable_organization_admin_account(AccountId=account_id)
+            logger.debug(
+                f"[{self.region}] Delegated Detective administration to account {account_id}"
+            )
         except botocore.exceptions.ClientError as error:
-            if error.response["Error"]["Code"] != "InvalidStateException":
+            if error.response["Error"]["Code"] != "InternalServerException":
                 logger.exception(
-                    f"[{self.region}] Unable to enable organization access for Service Catalog"
+                    f"[{self.region}] Unable to delegate Detective administration to account {account_id}"
                 )
                 raise error
