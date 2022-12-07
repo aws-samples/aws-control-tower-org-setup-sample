@@ -28,6 +28,7 @@ from .inspector import Inspector
 from .macie import Macie
 from .organizations import Organizations
 from .ram import RAM
+from .securitylake import SecurityLake
 from .securityhub import SecurityHub
 from .servicecatalog import ServiceCatalog
 from .sts import STS
@@ -42,6 +43,7 @@ __all__ = [
     "Macie",
     "Organizations",
     "RAM",
+    "SecurityLake",
     "SecurityHub",
     "ServiceCatalog",
     "STS",

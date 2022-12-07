@@ -25,6 +25,7 @@ This project configures the following [AWS Organizations](https://aws.amazon.com
 - [AWS IAM Access Analyzer](https://aws.amazon.com/iam/features/analyze-access/)
 - [Amazon Inspector](https://aws.amazon.com/inspector/)
 - [Amazon Detective](https://aws.amazon.com/detective/)
+- [Amazon Security Lake](https://aws.amazon.com/security-lake/)
 
 2. Enables organizational sharing for [AWS Service Catalog](https://aws.amazon.com/servicecatalog/) and [AWS Resource Access Manager](https://aws.amazon.com/ram/) (RAM)
 3. Optionally, configures an [AI opt-out policy](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_ai-opt-out.html) at the organization root
@@ -60,6 +61,7 @@ This project configures the following [AWS Organizations](https://aws.amazon.com
 - [AWS IAM Access Analyzer](https://aws.amazon.com/iam/features/analyze-access/) - IAM Access Analyzer helps you review existing access so that you can identify and remove unintended external or unused permissions.
 - [Amazon Inspector](https://aws.amazon.com/inspector/) - Amazon Inspector is an automated vulnerability management service that continually scans AWS workloads for software vulnerabilities and unintended network exposure.
 - [Amazon Detective](https://aws.amazon.com/detective/) - Amazon Detective makes it easy to analyze, investigate, and quickly identify the root cause of potential security issues or suspicious activities.
+- [Amazon Security Lake](https://aws.amazon.com/security-lake/) - Amazon Security Lake automatically centralizes security data from cloud, on-premises, and custom sources into a purpose-built data lake stored in your account.
 
 ## Usage
 

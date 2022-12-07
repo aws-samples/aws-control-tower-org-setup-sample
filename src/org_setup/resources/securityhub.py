@@ -25,6 +25,8 @@ from aws_lambda_powertools import Logger
 import boto3
 import botocore
 
+from ..constants import BOTO3_CONFIG
+
 logger = Logger(child=True)
 
 __all__ = ["SecurityHub"]
@@ -32,7 +34,7 @@ __all__ = ["SecurityHub"]
 
 class SecurityHub:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("securityhub", region_name=region)
+        self.client = session.client("securityhub", region_name=region, config=BOTO3_CONFIG)
         self.region = region
 
     def enable_organization_admin_account(self, account_id: str) -> None:

@@ -38,6 +38,7 @@ from .resources import (
     Macie,
     Organizations,
     RAM,
+    SecurityLake,
     SecurityHub,
     ServiceCatalog,
     STS,
@@ -110,6 +111,9 @@ def setup_region(admin_account_id: str, region: str, accounts: List[Dict[str, st
 
     # Delegate Detective to the administrator account
     # Detective(management_session, region).enable_organization_admin_account(admin_account_id)
+
+    # Delegate Security Lake to the administrator account
+    SecurityLake(management_session, region).create_datalake_delegated_admin(admin_account_id)
 
     # Delegate Inspector to the administrator account
     Inspector(management_session, region).enable_delegated_admin_account(admin_account_id)

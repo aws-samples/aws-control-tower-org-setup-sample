@@ -27,33 +27,32 @@ from ..constants import BOTO3_CONFIG
 
 logger = Logger(child=True)
 
-__all__ = ["FMS"]
+__all__ = ["SecurityLake"]
 
 
-class FMS:
+class SecurityLake:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("fms", region_name=region, config=BOTO3_CONFIG)
+        self.client = session.client("securitylake", region_name=region, config=BOTO3_CONFIG)
         self.region = region
 
-    def associate_admin_account(self, account_id: str) -> None:
+    def create_datalake_delegated_admin(self, account_id: str) -> None:
         """
-        Delegate Firewall Manager administration to an account
+        Delegate Security Lake administration to an account
 
         Executes in: management account in all regions
         """
+
         logger.info(
-            f"[{self.region}] Delegating Firewall Manager administration to account {account_id}"
+            f"[{self.region}] Delegating Security Lake administration to account {account_id}"
         )
         try:
-            self.client.associate_admin_account(AdminAccount=account_id)
+            self.client.create_datalake_delegated_admin(account=account_id)
             logger.debug(
-                f"[{self.region}] Delegated Firewall Manager administration to account {account_id}"
+                f"[{self.region}] Delegated Security Lake administration to account {account_id}"
             )
-        except self.client.exceptions.InvalidOperationException:
-            logger.warn(f"[{self.region}] Firewall Manager delegation is not supported")
         except botocore.exceptions.ClientError as error:
-            if error.response["Error"]["Code"] != "InternalErrorException":
+            if error.response["Error"]["Code"] != "InternalServerException":
                 logger.exception(
-                    f"[{self.region}] Unable to delegate Firewall Manager admninistration to account {account_id}"
+                    f"[{self.region}] Unable to delegate Security Lake administration to account {account_id}"
                 )
                 raise error

@@ -24,6 +24,8 @@ from typing import List
 from aws_lambda_powertools import Logger
 import boto3
 
+from ..constants import BOTO3_CONFIG
+
 logger = Logger(child=True)
 
 __all__ = ["EC2"]
@@ -31,7 +33,7 @@ __all__ = ["EC2"]
 
 class EC2:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("ec2", region_name=region)
+        self.client = session.client("ec2", region_name=region, config=BOTO3_CONFIG)
 
     def get_all_regions(self) -> List[str]:
         """

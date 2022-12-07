@@ -21,13 +21,23 @@
 
 from typing import Set
 
+from botocore.config import Config
+
 __all__ = [
     "AI_OPT_OUT_POLICY_NAME",
     "AI_OPT_OUT_POLICY",
+    "BOTO3_CONFIG",
     "ORGANIZATION_ANALYZER_NAME",
     "SERVICE_ACCESS_PRINCIPALS",
     "DELEGATED_ADMINISTRATOR_PRINCIPALS",
 ]
+
+BOTO3_CONFIG = Config(
+    retries={
+        "max_attempts": 10,
+        "mode": "standard",
+    }
+)
 
 AI_OPT_OUT_POLICY_NAME: str = "AllOptOutPolicy"
 
@@ -56,6 +66,7 @@ SERVICE_ACCESS_PRINCIPALS: Set[str] = frozenset(
         "guardduty.amazonaws.com",
         "inspector2.amazonaws.com",
         "malware-protection.guardduty.amazonaws.com",
+        "securitylake.amazonaws.com",
         "securityhub.amazonaws.com",
         "macie.amazonaws.com",
     }
@@ -68,6 +79,7 @@ DELEGATED_ADMINISTRATOR_PRINCIPALS: Set[str] = frozenset(
         "detective.amazonaws.com",
         "guardduty.amazonaws.com",
         "inspector2.amazonaws.com",
+        "securitylake.amazonaws.com",
         "securityhub.amazonaws.com",
         "macie.amazonaws.com",
         "storage-lens.s3.amazonaws.com",
