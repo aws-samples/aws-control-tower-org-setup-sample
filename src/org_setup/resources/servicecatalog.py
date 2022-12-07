@@ -23,6 +23,8 @@ from aws_lambda_powertools import Logger
 import boto3
 import botocore
 
+from ..constants import BOTO3_CONFIG
+
 logger = Logger(child=True)
 
 __all__ = ["ServiceCatalog"]
@@ -30,7 +32,7 @@ __all__ = ["ServiceCatalog"]
 
 class ServiceCatalog:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("servicecatalog", region_name=region)
+        self.client = session.client("servicecatalog", region_name=region, config=BOTO3_CONFIG)
         self.region = region
 
     def enable_aws_organizations_access(self) -> None:

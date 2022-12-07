@@ -101,6 +101,7 @@ Resources:
                   - "ram:EnableSharingWithAwsOrganization"
                   - "securityhub:EnableOrganizationAdminAccount"
                   - "servicecatalog:EnableAWSOrganizationsAccess"
+                  - "securitylake:CreateDatalakeDelegatedAdmin"
                 Resource: "*"
               - Effect: Allow
                 Action: "iam:CreateServiceLinkedRole"
@@ -108,12 +109,14 @@ Resources:
                   - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/detective.${AWS::URLSuffix}/AWSServiceRoleForDetective"
                   - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/ram.${AWS::URLSuffix}/AWSServiceRoleForResourceAccessManager"
                   - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/inspector2.${AWS::URLSuffix}/AWSServiceRoleForAmazonInspector2"
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/securitylake.${AWS::URLSuffix}/AWSServiceRoleForSecurityLake"
                 Condition:
                   StringLike:
                     "iam:AWSServiceName":
                       - !Sub "detective.${AWS::URLSuffix}"
                       - !Sub "ram.${AWS::URLSuffix}"
                       - !Sub "inspector2.${AWS::URLSuffix}"
+                      - !Sub "securitylake.${AWS::URLSuffix}"
               - Effect: Allow
                 Action: "sts:AssumeRole"
                 Resource: !Sub "arn:${AWS::Partition}:iam::*:role/AWSControlTowerExecution"

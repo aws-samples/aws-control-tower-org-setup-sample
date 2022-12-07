@@ -30,6 +30,7 @@ import botocore
 from ..constants import (
     AI_OPT_OUT_POLICY_NAME,
     AI_OPT_OUT_POLICY,
+    BOTO3_CONFIG,
     DELEGATED_ADMINISTRATOR_PRINCIPALS,
     SERVICE_ACCESS_PRINCIPALS,
 )
@@ -49,6 +50,7 @@ class Organizations:
             "organizations",
             region_name="us-east-1",
             endpoint_url="https://organizations.us-east-1.amazonaws.com",
+            config=BOTO3_CONFIG,
         )
         self.region = "us-east-1"
         self._roots = []

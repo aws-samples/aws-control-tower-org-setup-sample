@@ -23,7 +23,7 @@ from aws_lambda_powertools import Logger
 import boto3
 import botocore
 
-from ..constants import ORGANIZATION_ANALYZER_NAME
+from ..constants import ORGANIZATION_ANALYZER_NAME, BOTO3_CONFIG
 
 logger = Logger(child=True)
 
@@ -32,7 +32,7 @@ __all__ = ["AccessAnalyzer"]
 
 class AccessAnalyzer:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("accessanalyzer", region_name=region)
+        self.client = session.client("accessanalyzer", region_name=region, config=BOTO3_CONFIG)
         self.region = region
 
     def create_org_analyzer(self) -> None:

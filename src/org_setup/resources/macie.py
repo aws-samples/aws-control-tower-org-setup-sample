@@ -24,7 +24,8 @@ from typing import List, Dict
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
-from botocore.config import Config
+
+from ..constants import BOTO3_CONFIG
 
 logger = Logger(child=True)
 
@@ -33,13 +34,7 @@ __all__ = ["Macie"]
 
 class Macie:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        config = Config(
-            retries={
-                "max_attempts": 10,
-                "mode": "standard",
-            }
-        )
-        self.client = session.client("macie2", region_name=region, config=config)
+        self.client = session.client("macie2", region_name=region, config=BOTO3_CONFIG)
         self.region = region
 
     def enable_macie(self) -> None:
