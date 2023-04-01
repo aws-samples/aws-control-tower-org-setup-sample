@@ -44,13 +44,13 @@ class Macie:
         Executes in: management account in all regions
         """
 
-        logger.info(f"[{self.region}] Enabling Macie")
+        logger.info("Enabling Macie", region=self.region)
         try:
             self.client.enable_macie(findingPublishingFrequency="FIFTEEN_MINUTES", status="ENABLED")
-            logger.debug(f"[{self.region}] Enabled Macie")
+            logger.debug("Enabled Macie", region=self.region)
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ConflictException":
-                logger.exception(f"[{self.region}] Unable to enable Macie")
+                logger.exception("Unable to enable Macie", region=self.region)
                 raise error
 
     def enable_organization_admin_account(self, account_id: str) -> None:
@@ -60,14 +60,14 @@ class Macie:
         Executes in: management account in all regions
         """
 
-        logger.info(f"[{self.region}] Delegating Macie administration to account {account_id}")
+        logger.info(f"Delegating Macie administration to account {account_id}", region=self.region)
         try:
             self.client.enable_organization_admin_account(adminAccountId=account_id)
-            logger.debug(f"[{self.region}] Delegated Macie administration to account {account_id}")
+            logger.debug(f"Delegated Macie administration to account {account_id}", region=self.region)
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ConflictException":
                 logger.exception(
-                    f"[{self.region}] Unable to delegate Macie administration to account {account_id}"
+                    f"Unable to delegate Macie administration to account {account_id}", region=self.region
                 )
                 raise error
 
@@ -95,5 +95,5 @@ class Macie:
                 )
             except botocore.exceptions.ClientError as error:
                 if error.response["Error"]["Code"] != "ValidationException":
-                    logger.exception(f"[{self.region}] Unable to create Macie member")
+                    logger.exception("Unable to create Macie member", region=self.region)
                     raise error

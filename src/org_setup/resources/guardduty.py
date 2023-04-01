@@ -19,11 +19,14 @@
 * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from typing import List, Dict
+from typing import List, Dict, TYPE_CHECKING
 
 from aws_lambda_powertools import Logger
 import boto3
 import botocore
+
+if TYPE_CHECKING:
+    from mypy_boto3_guardduty import GuardDutyClient
 
 from ..constants import BOTO3_CONFIG
 
@@ -34,7 +37,9 @@ __all__ = ["GuardDuty"]
 
 class GuardDuty:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("guardduty", region_name=region, config=BOTO3_CONFIG)
+        self.client: GuardDutyClient = session.client(
+            "guardduty", region_name=region, config=BOTO3_CONFIG
+        )
         self.region = region
 
     def enable_organization_admin_account(self, account_id: str) -> None:
@@ -44,16 +49,16 @@ class GuardDuty:
         Executes in: management account in all regions
         """
 
-        logger.info(f"[{self.region}] Delegating GuardDuty administration to account {account_id}")
+        logger.info(f"Delegating GuardDuty administration to account {account_id}", region=self.region)
         try:
             self.client.enable_organization_admin_account(AdminAccountId=account_id)
             logger.debug(
-                f"[{self.region}] Delegated GuardDuty administration to account {account_id}"
+                f"Delegated GuardDuty administration to account {account_id}", region=self.region
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "BadRequestException":
                 logger.exception(
-                    f"[{self.region}] Unable to delegate GuardDuty administration to account {account_id}"
+                    f"Unable to delegate GuardDuty administration to account {account_id}", region=self.region
                 )
                 raise error
 
@@ -77,13 +82,97 @@ class GuardDuty:
                     DetectorId=detector_id,
                     Enable=True,
                     FindingPublishingFrequency="FIFTEEN_MINUTES",
-                    DataSources={"S3Logs": {"Enable": True}},
+                    DataSources={
+                        "S3Logs": {
+                            "Enable": True,
+                        },
+                        "Kubernetes": {
+                            "AuditLogs": {
+                                "Enable": True,
+                            }
+                        },
+                        "MalwareProtection": {
+                            "ScanEc2InstanceWithFindings": {
+                                "EbsVolumes": True,
+                            }
+                        },
+                    },
+                    Features=[
+                        {
+                            "Name": "S3_DATA_EVENTS",
+                            "Status": "ENABLED",
+                        },
+                        {
+                            "Name": "EKS_AUDIT_LOGS",
+                            "Status": "ENABLED",
+                        },
+                        {
+                            "Name": "EBS_MALWARE_PROTECTION",
+                            "Status": "ENABLED",
+                        },
+                        {
+                            "Name": "RDS_LOGIN_EVENTS",
+                            "Status": "ENABLED",
+                        },
+                        {
+                            "Name": "EKS_RUNTIME_MONITORING",
+                            "Status": "ENABLED",
+                            "AdditionalConfiguration": [
+                                {
+                                    "Name": "EKS_ADDON_MANAGEMENT",
+                                    "Status": "ENABLED",
+                                },
+                            ],
+                        },
+                    ],
                 )
         else:
             response = self.client.create_detector(
                 Enable=True,
-                DataSources={"S3Logs": {"Enable": True}},
+                DataSources={
+                    "S3Logs": {
+                        "Enable": True,
+                    },
+                    "Kubernetes": {
+                        "AuditLogs": {
+                            "Enable": True,
+                        }
+                    },
+                    "MalwareProtection": {
+                        "ScanEc2InstanceWithFindings": {
+                            "EbsVolumes": True,
+                        }
+                    },
+                },
                 FindingPublishingFrequency="FIFTEEN_MINUTES",
+                Features=[
+                    {
+                        "Name": "S3_DATA_EVENTS",
+                        "Status": "ENABLED",
+                    },
+                    {
+                        "Name": "EKS_AUDIT_LOGS",
+                        "Status": "ENABLED",
+                    },
+                    {
+                        "Name": "EBS_MALWARE_PROTECTION",
+                        "Status": "ENABLED",
+                    },
+                    {
+                        "Name": "RDS_LOGIN_EVENTS",
+                        "Status": "ENABLED",
+                    },
+                    {
+                        "Name": "EKS_RUNTIME_MONITORING",
+                        "Status": "ENABLED",
+                        "AdditionalConfiguration": [
+                            {
+                                "Name": "EKS_ADDON_MANAGEMENT",
+                                "Status": "ENABLED",
+                            },
+                        ],
+                    },
+                ],
             )
             detector_ids.append(response["DetectorId"])
 
@@ -108,9 +197,38 @@ class GuardDuty:
                         }
                     },
                 },
+                Features=[
+                    {
+                        "Name": "S3_DATA_EVENTS",
+                        "Status": "ENABLED",
+                    },
+                    {
+                        "Name": "EKS_AUDIT_LOGS",
+                        "Status": "ENABLED",
+                    },
+                    {
+                        "Name": "EBS_MALWARE_PROTECTION",
+                        "Status": "ENABLED",
+                    },
+                    {
+                        "Name": "RDS_LOGIN_EVENTS",
+                        "Status": "ENABLED",
+                    },
+                    {
+                        "Name": "EKS_RUNTIME_MONITORING",
+                        "Status": "ENABLED",
+                        "AdditionalConfiguration": [
+                            {
+                                "Name": "EKS_ADDON_MANAGEMENT",
+                                "Status": "ENABLED",
+                            },
+                        ],
+                    },
+                ],
+                AutoEnableOrganizationMembers="ALL"
             )
 
-        logger.info(f"[{self.region}] Updated GuardDuty to auto-enroll new accounts")
+        logger.info("Updated GuardDuty to auto-enroll new accounts", region=self.region)
 
         return detector_ids
 

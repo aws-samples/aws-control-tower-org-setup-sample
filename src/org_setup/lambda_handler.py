@@ -194,7 +194,6 @@ def delete(event: Dict[str, Any], context: LambdaContext) -> None:
 
 @logger.inject_lambda_context(log_event=True)
 def handler(event: Dict[str, Any], context: LambdaContext) -> None:
-
     # Set up a new landing zone
     if event.get("eventName") == "SetupLandingZone":
         primary_region = event["awsRegion"]

@@ -41,13 +41,13 @@ class ServiceCatalog:
 
         Executes in: management account in all regions
         """
-        logger.info(f"[{self.region}] Enabling organizational access for Service Catalog")
+        logger.info("Enabling organizational access for Service Catalog", region=self.region)
         try:
             self.client.enable_aws_organizations_access()
-            logger.debug(f"[{self.region}] Enabled organizational access for Service Catalog")
+            logger.debug("Enabled organizational access for Service Catalog", region=self.region)
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "InvalidStateException":
                 logger.exception(
-                    f"[{self.region}] Unable to enable organization access for Service Catalog"
+                    "Unable to enable organization access for Service Catalog", region=self.region
                 )
                 raise error

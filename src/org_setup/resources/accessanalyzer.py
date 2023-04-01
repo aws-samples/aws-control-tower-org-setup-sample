@@ -42,15 +42,15 @@ class AccessAnalyzer:
         Executes in: delegated administrator account
         """
 
-        logger.info(f"[{self.region}] Creating organizational IAM access analyzer")
+        logger.info("Creating organizational IAM access analyzer", region=self.region)
         try:
             self.client.create_analyzer(
                 analyzerName=ORGANIZATION_ANALYZER_NAME, type="ORGANIZATION"
             )
-            logger.debug(f"[{self.region}] Created organizational IAM access analyzer")
+            logger.debug("Created organizational IAM access analyzer", region=self.region)
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ConflictException":
                 logger.exception(
-                    f"[{self.region}] Unable to create an organizational IAM access analyzer"
+                    "Unable to create an organizational IAM access analyzer", region=self.region
                 )
                 raise error
