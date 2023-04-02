@@ -42,15 +42,18 @@ class Detective:
         Executes in: management account in all regions
         """
 
-        logger.info(f"[{self.region}] Delegating Detective administration to account {account_id}")
+        logger.info(
+            f"Delegating Detective administration to account {account_id}", region=self.region
+        )
         try:
             self.client.enable_organization_admin_account(AccountId=account_id)
             logger.debug(
-                f"[{self.region}] Delegated Detective administration to account {account_id}"
+                f"Delegated Detective administration to account {account_id}", region=self.region
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "InternalServerException":
                 logger.exception(
-                    f"[{self.region}] Unable to delegate Detective administration to account {account_id}"
+                    f"Unable to delegate Detective administration to account {account_id}",
+                    region=self.region,
                 )
                 raise error

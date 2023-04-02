@@ -42,11 +42,11 @@ class RAM:
         Executes in: management account in all regions
         """
 
-        logger.info(f"[{self.region}] Enabling RAM sharing with organization")
+        logger.info("Enabling RAM sharing with organization", region=self.region)
         try:
             self.client.enable_sharing_with_aws_organization()
-            logger.debug(f"[{self.region}] Enabled RAM sharing with organization")
+            logger.debug("Enabled RAM sharing with organization", region=self.region)
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "OperationNotPermittedException":
-                logger.exception(f"[{self.region}] Unable enable RAM sharing with organization")
+                logger.exception("Unable enable RAM sharing with organization", region=self.region)
                 raise error

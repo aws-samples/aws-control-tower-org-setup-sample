@@ -65,7 +65,7 @@ class Organizations:
         except self.client.exceptions.AWSOrganizationsNotInUseException:
             raise OrganizationNotFoundError()
         except botocore.exceptions.ClientError:
-            logger.exception(f"[{self.region}] Unable to describe organization")
+            logger.exception("Unable to describe organization", region=self.region)
             raise
         return response["Organization"]
 
@@ -121,13 +121,15 @@ class Organizations:
         """
         Enable all features in an organization
         """
-        logger.info(f"[{self.region}] Enabling all features in the organization")
+        logger.info("Enabling all features in the organization", region=self.region)
         try:
             self.client.enable_all_features()
-            logger.debug(f"[{self.region}] Enabled all features in organization")
+            logger.debug("Enabled all features in organization", region=self.region)
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "HandshakeConstraintViolationException":
-                logger.exception(f"[{self.region}] Unable to enable all features in organization")
+                logger.exception(
+                    "Unable to enable all features in organization", region=self.region
+                )
                 raise
 
     def enable_aws_service_access(self) -> None:
@@ -135,14 +137,14 @@ class Organizations:
         Enable AWS service access in organization
         """
         for principal in SERVICE_ACCESS_PRINCIPALS:
-            logger.info(f"[{self.region}] Enabling AWS service access for {principal}")
+            logger.info(f"Enabling AWS service access for {principal}", region=self.region)
             try:
                 self.client.enable_aws_service_access(ServicePrincipal=principal)
-                logger.debug(f"[{self.region}] Enabled AWS service access for {principal}")
+                logger.debug(f"Enabled AWS service access for {principal}", region=self.region)
             except botocore.exceptions.ClientError as error:
                 if error.response["Error"]["Code"] != "ServiceException":
                     logger.exception(
-                        f"[{self.region}] Unable enable AWS service access for {principal}"
+                        f"Unable enable AWS service access for {principal}", region=self.region
                     )
                     raise error
 
@@ -150,7 +152,7 @@ class Organizations:
         """
         Enables all policy types in an organization
         """
-        logger.info(f"[{self.region}] Enabling all policy types in organization")
+        logger.info("Enabling all policy types in organization", region=self.region)
 
         for root in self.list_roots():
             root_id = root["Id"]
@@ -162,19 +164,19 @@ class Organizations:
 
             for disabled_type in disabled_types:
                 logger.info(
-                    f"[{self.region}] Enabling policy type {disabled_type} on root {root_id}"
+                    f"Enabling policy type {disabled_type} on root {root_id}", region=self.region
                 )
                 try:
                     self.client.enable_policy_type(RootId=root_id, PolicyType=disabled_type)
                     logger.debug(
-                        f"[{self.region}] Enabled policy type {disabled_type} on root {root_id}"
+                        f"Enabled policy type {disabled_type} on root {root_id}", region=self.region
                     )
                 except botocore.exceptions.ClientError as error:
                     if error.response["Error"]["Code"] != "PolicyTypeAlreadyEnabledException":
-                        logger.exception(f"[{self.region}] Unable to enable policy type")
+                        logger.exception("Unable to enable policy type", region=self.region)
                         raise error
 
-        logger.debug(f"[{self.region}] Enabled all policy types in organization")
+        logger.debug("Enabled all policy types in organization", region=self.region)
 
     def get_ai_optout_policy(self) -> str:
         """
@@ -183,10 +185,10 @@ class Organizations:
 
         for policy in self.list_policies("AISERVICES_OPT_OUT_POLICY"):
             if policy["Name"] == AI_OPT_OUT_POLICY_NAME:
-                logger.info(f"[{self.region}] Found existing {AI_OPT_OUT_POLICY_NAME} policy")
+                logger.info(f"Found existing {AI_OPT_OUT_POLICY_NAME} policy", region=self.region)
                 return policy["Id"]
 
-        logger.info(f"[{self.region}] {AI_OPT_OUT_POLICY_NAME} policy not found, creating")
+        logger.info(f"{AI_OPT_OUT_POLICY_NAME} policy not found, creating", region=self.region)
 
         try:
             response = self.client.create_policy(
@@ -196,7 +198,9 @@ class Organizations:
                 Type="AISERVICES_OPT_OUT_POLICY",
             )
             policy_id = response.get("Policy", {}).get("PolicySummary", {}).get("Id")
-            logger.debug(f"[{self.region}] Created policy {AI_OPT_OUT_POLICY_NAME} ({policy_id})")
+            logger.debug(
+                f"Created policy {AI_OPT_OUT_POLICY_NAME} ({policy_id})", region=self.region
+            )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] == "DuplicatePolicyException":
                 return self.get_ai_optout_policy()
@@ -210,22 +214,24 @@ class Organizations:
         """
         policy_id = self.get_ai_optout_policy()
         if not policy_id:
-            logger.warn(f"[{self.region}] Unable to find {AI_OPT_OUT_POLICY_NAME} policy")
+            logger.warn(f"Unable to find {AI_OPT_OUT_POLICY_NAME} policy", region=self.region)
             return
 
         for root in self.list_roots():
             root_id = root["Id"]
             logger.info(
-                f"[{self.region}] Attaching {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}"
+                f"Attaching {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}",
+                region=self.region,
             )
             try:
                 self.client.attach_policy(PolicyId=policy_id, TargetId=root_id)
                 logger.debug(
-                    f"[{self.region}] Attached {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}"
+                    f"Attached {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}",
+                    region=self.region,
                 )
             except botocore.exceptions.ClientError as error:
                 if error.response["Error"]["Code"] != "DuplicatePolicyAttachmentException":
-                    logger.exception(f"[{self.region}] Unable to attach policy")
+                    logger.exception("Unable to attach policy", region=self.region)
                     raise error
 
     def register_delegated_administrators(self, account_id: str) -> None:
@@ -235,19 +241,21 @@ class Organizations:
 
         for principal in DELEGATED_ADMINISTRATOR_PRINCIPALS:
             logger.info(
-                f"[{self.region}] Delegating {principal} administration to account {account_id}"
+                f"Delegating {principal} administration to account {account_id}", region=self.region
             )
             try:
                 self.client.register_delegated_administrator(
                     AccountId=account_id, ServicePrincipal=principal
                 )
                 logger.debug(
-                    f"[{self.region}] Delegated {principal} administration to account {account_id}"
+                    f"Delegated {principal} administration to account {account_id}",
+                    region=self.region,
                 )
             except botocore.exceptions.ClientError as error:
                 if error.response["Error"]["Code"] != "AccountAlreadyRegisteredException":
                     logger.exception(
-                        f"[{self.region}] Unable to delegate {principal} administration to account {account_id}"
+                        f"Unable to delegate {principal} administration to account {account_id}",
+                        region=self.region,
                     )
                     raise error
 

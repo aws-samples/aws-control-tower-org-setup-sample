@@ -45,17 +45,18 @@ class SecurityHub:
         """
 
         logger.info(
-            f"[{self.region}] Delegating SecurityHub administration to account {account_id}"
+            f"Delegating SecurityHub administration to account {account_id}", region=self.region
         )
         try:
             self.client.enable_organization_admin_account(AdminAccountId=account_id)
             logger.debug(
-                f"[{self.region}] Delegated SecurityHub administration to account {account_id}"
+                f"Delegated SecurityHub administration to account {account_id}", region=self.region
             )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ResourceConflictException":
                 logger.exception(
-                    f"[{self.region}] Unable to delegate SecurityHub administration to account {account_id}"
+                    f"Unable to delegate SecurityHub administration to account {account_id}",
+                    region=self.region,
                 )
                 raise error
 
@@ -66,9 +67,9 @@ class SecurityHub:
         Executes in: delegated administrator account in each region
         """
 
-        logger.info(f"[{self.region}] Auto-enrolling new accounts with SecurityHub")
+        logger.info("Auto-enrolling new accounts with SecurityHub", region=self.region)
         self.client.update_organization_configuration(AutoEnable=True)
-        logger.info(f"[{self.region}] Auto-enable new security controls")
+        logger.info("Auto-enable new security controls", region=self.region)
         self.client.update_security_hub_configuration(AutoEnableControls=True)
 
     def create_finding_aggregator(self) -> None:
@@ -82,12 +83,14 @@ class SecurityHub:
         aggregators = response["FindingAggregators"]
 
         if not aggregators:
-            logger.info(f"[{self.region}] Creating SecurityHub finding aggregator")
+            logger.info("Creating SecurityHub finding aggregator", region=self.region)
             try:
                 self.client.create_finding_aggregator(RegionLinkingMode="ALL_REGIONS")
-                logger.debug(f"[{self.region}] Created SecurityHub finding aggregator")
+                logger.debug("Created SecurityHub finding aggregator", region=self.region)
             except botocore.exceptions.ClientError:
-                logger.exception(f"[{self.region}] Unable to create SecurityHub finding aggregator")
+                logger.exception(
+                    "Unable to create SecurityHub finding aggregator", region=self.region
+                )
                 raise
 
     def create_members(self, accounts: List[Dict[str, str]]) -> None:

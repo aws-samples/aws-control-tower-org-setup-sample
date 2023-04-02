@@ -1,2 +1,2 @@
-aws-lambda-powertools==1.26.6
+aws-lambda-powertools[aws-sdk]==2.11.0
 crhelper==2.0.11
