@@ -121,6 +121,9 @@ def setup_region(admin_account_id: str, region: str, accounts: List[Dict[str, st
     # Create organization IAM access analyzer in the administrator account
     AccessAnalyzer(delegate_session, region).create_org_analyzer()
 
+    # Create account IAM access analyzer in the management account
+    AccessAnalyzer(management_session, region).create_management_analyzer()
+
 
 def setup_organization(
     primary_region: str, admin_account_id: str = None, regions: List[str] = None
@@ -137,7 +140,7 @@ def setup_organization(
     if not regions:
         regions = EC2(management_session, primary_region).get_all_regions()
 
-    logger.info(f"[{primary_region}] Configuring organization {org_id} in regions: {regions}")
+    logger.info(f"Configuring organization {org_id} in regions: {regions}", region=primary_region)
 
     # enable all organizational features
     organizations.enable_all_features()

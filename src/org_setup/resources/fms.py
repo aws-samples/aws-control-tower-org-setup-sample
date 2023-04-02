@@ -42,18 +42,21 @@ class FMS:
         Executes in: management account in all regions
         """
         logger.info(
-            f"Delegating Firewall Manager administration to account {account_id}", region=self.region
+            f"Delegating Firewall Manager administration to account {account_id}",
+            region=self.region,
         )
         try:
             self.client.associate_admin_account(AdminAccount=account_id)
             logger.debug(
-                f"Delegated Firewall Manager administration to account {account_id}", region=self.region
+                f"Delegated Firewall Manager administration to account {account_id}",
+                region=self.region,
             )
         except self.client.exceptions.InvalidOperationException:
             logger.warn("Firewall Manager delegation is not supported", region=self.region)
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "InternalErrorException":
                 logger.exception(
-                    f"Unable to delegate Firewall Manager admninistration to account {account_id}", region=self.region
+                    f"Unable to delegate Firewall Manager admninistration to account {account_id}",
+                    region=self.region,
                 )
                 raise error

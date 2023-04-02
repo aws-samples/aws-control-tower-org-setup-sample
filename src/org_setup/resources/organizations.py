@@ -127,7 +127,9 @@ class Organizations:
             logger.debug("Enabled all features in organization", region=self.region)
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "HandshakeConstraintViolationException":
-                logger.exception("Unable to enable all features in organization", region=self.region)
+                logger.exception(
+                    "Unable to enable all features in organization", region=self.region
+                )
                 raise
 
     def enable_aws_service_access(self) -> None:
@@ -196,7 +198,9 @@ class Organizations:
                 Type="AISERVICES_OPT_OUT_POLICY",
             )
             policy_id = response.get("Policy", {}).get("PolicySummary", {}).get("Id")
-            logger.debug(f"Created policy {AI_OPT_OUT_POLICY_NAME} ({policy_id})", region=self.region)
+            logger.debug(
+                f"Created policy {AI_OPT_OUT_POLICY_NAME} ({policy_id})", region=self.region
+            )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] == "DuplicatePolicyException":
                 return self.get_ai_optout_policy()
@@ -216,12 +220,14 @@ class Organizations:
         for root in self.list_roots():
             root_id = root["Id"]
             logger.info(
-                f"Attaching {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}", region=self.region
+                f"Attaching {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}",
+                region=self.region,
             )
             try:
                 self.client.attach_policy(PolicyId=policy_id, TargetId=root_id)
                 logger.debug(
-                    f"Attached {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}", region=self.region
+                    f"Attached {AI_OPT_OUT_POLICY_NAME} ({policy_id}) to root {root_id}",
+                    region=self.region,
                 )
             except botocore.exceptions.ClientError as error:
                 if error.response["Error"]["Code"] != "DuplicatePolicyAttachmentException":
@@ -242,12 +248,14 @@ class Organizations:
                     AccountId=account_id, ServicePrincipal=principal
                 )
                 logger.debug(
-                    f"Delegated {principal} administration to account {account_id}", region=self.region
+                    f"Delegated {principal} administration to account {account_id}",
+                    region=self.region,
                 )
             except botocore.exceptions.ClientError as error:
                 if error.response["Error"]["Code"] != "AccountAlreadyRegisteredException":
                     logger.exception(
-                        f"Unable to delegate {principal} administration to account {account_id}", region=self.region
+                        f"Unable to delegate {principal} administration to account {account_id}",
+                        region=self.region,
                     )
                     raise error
 

@@ -48,11 +48,14 @@ class SecurityLake:
         try:
             self.client.create_datalake_delegated_admin(account=account_id)
             logger.debug(
-                f"Delegated Security Lake administration to account {account_id}", region=self.region
+                f"Delegated Security Lake administration to account {account_id}",
+                region=self.region,
             )
         except botocore.exceptions.ClientError as error:
-            if error.response["Error"]["Code"] != "InternalServerException":
+            # raises ValidationException if already delegated
+            if error.response["Error"]["Code"] != "ValidationException":
                 logger.exception(
-                    f"Unable to delegate Security Lake administration to account {account_id}", region=self.region
+                    f"Unable to delegate Security Lake administration to account {account_id}",
+                    region=self.region,
                 )
                 raise error

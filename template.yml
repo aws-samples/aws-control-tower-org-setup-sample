@@ -89,6 +89,9 @@ Resources:
                   - "organizations:RegisterDelegatedAdministrator"
                 Resource: "*"
               - Effect: Allow
+                Action: "access-analyzer:CreateAnalyzer"
+                Resource: !Sub "arn:${AWS::Partition}:access-analyzer:*:${AWS::AccountId}:analyzer/*"
+              - Effect: Allow
                 Action:
                   - "detective:EnableOrganizationAdminAccount"
                   - "ec2:DescribeRegions"
@@ -112,6 +115,7 @@ Resources:
                   - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/securitylake.${AWS::URLSuffix}/AWSServiceRoleForSecurityLake"
                   - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/macie.${AWS::URLSuffix}/AWSServiceRoleForAmazonMacie"
                   - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/fms.${AWS::URLSuffix}/AWSServiceRoleForFMS"
+                  - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/aws-service-role/access-analyzer.${AWS::URLSuffix}/AWSServiceRoleForAccessAnalyzer"
                 Condition:
                   StringLike:
                     "iam:AWSServiceName":
@@ -121,6 +125,7 @@ Resources:
                       - !Sub "securitylake.${AWS::URLSuffix}"
                       - !Sub "macie.${AWS::URLSuffix}"
                       - !Sub "fms.${AWS::URLSuffix}"
+                      - !Sub "access-analyzer.${AWS::URLSuffix}"
               - Effect: Allow
                 Action: "sts:AssumeRole"
                 Resource: !Sub "arn:${AWS::Partition}:iam::*:role/AWSControlTowerExecution"

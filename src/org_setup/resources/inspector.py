@@ -42,7 +42,9 @@ class Inspector:
         Executes in: management account in all regions
         """
 
-        logger.info(f"Delegating Inspector administration to account {account_id}", region=self.region)
+        logger.info(
+            f"Delegating Inspector administration to account {account_id}", region=self.region
+        )
         try:
             self.client.enable_delegated_admin_account(delegatedAdminAccountId=account_id)
             logger.debug(
@@ -51,6 +53,7 @@ class Inspector:
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ConflictException":
                 logger.exception(
-                    f"Unable to delegate Inspector administration to account {account_id}", region=self.region
+                    f"Unable to delegate Inspector administration to account {account_id}",
+                    region=self.region,
                 )
                 raise error

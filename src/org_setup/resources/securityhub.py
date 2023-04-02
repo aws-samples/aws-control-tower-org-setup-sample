@@ -55,7 +55,8 @@ class SecurityHub:
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ResourceConflictException":
                 logger.exception(
-                    f"Unable to delegate SecurityHub administration to account {account_id}", region=self.region
+                    f"Unable to delegate SecurityHub administration to account {account_id}",
+                    region=self.region,
                 )
                 raise error
 
@@ -87,7 +88,9 @@ class SecurityHub:
                 self.client.create_finding_aggregator(RegionLinkingMode="ALL_REGIONS")
                 logger.debug("Created SecurityHub finding aggregator", region=self.region)
             except botocore.exceptions.ClientError:
-                logger.exception("Unable to create SecurityHub finding aggregator", region=self.region)
+                logger.exception(
+                    "Unable to create SecurityHub finding aggregator", region=self.region
+                )
                 raise
 
     def create_members(self, accounts: List[Dict[str, str]]) -> None:

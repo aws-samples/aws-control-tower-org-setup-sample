@@ -63,11 +63,14 @@ class Macie:
         logger.info(f"Delegating Macie administration to account {account_id}", region=self.region)
         try:
             self.client.enable_organization_admin_account(adminAccountId=account_id)
-            logger.debug(f"Delegated Macie administration to account {account_id}", region=self.region)
+            logger.debug(
+                f"Delegated Macie administration to account {account_id}", region=self.region
+            )
         except botocore.exceptions.ClientError as error:
             if error.response["Error"]["Code"] != "ConflictException":
                 logger.exception(
-                    f"Unable to delegate Macie administration to account {account_id}", region=self.region
+                    f"Unable to delegate Macie administration to account {account_id}",
+                    region=self.region,
                 )
                 raise error
 
@@ -79,7 +82,7 @@ class Macie:
         """
 
         self.client.update_organization_configuration(autoEnable=True)
-        logger.info(f"[{self.region}] Updated Macie to auto-enroll new accounts")
+        logger.info("Updated Macie to auto-enroll new accounts", region=self.region)
 
     def create_members(self, accounts: List[Dict[str, str]]) -> None:
         """
