@@ -112,6 +112,10 @@ class GuardDuty:
                                 },
                             ],
                         },
+                        {
+                            "Name": "LAMBDA_NETWORK_LOGS",
+                            "Status": "ENABLED"
+                        }
                     ],
                 )
         else:
