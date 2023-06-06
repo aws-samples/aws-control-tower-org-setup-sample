@@ -104,7 +104,7 @@ Resources:
                   - "ram:EnableSharingWithAwsOrganization"
                   - "securityhub:EnableOrganizationAdminAccount"
                   - "servicecatalog:EnableAWSOrganizationsAccess"
-                  - "securitylake:CreateDatalakeDelegatedAdmin"
+                  - "securitylake:RegisterDataLakeDelegatedAdministrator"
                 Resource: "*"
               - Effect: Allow
                 Action: "iam:CreateServiceLinkedRole"

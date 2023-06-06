@@ -35,7 +35,7 @@ class SecurityLake:
         self.client = session.client("securitylake", region_name=region, config=BOTO3_CONFIG)
         self.region = region
 
-    def create_datalake_delegated_admin(self, account_id: str) -> None:
+    def register_data_lake_delegated_administrator(self, account_id: str) -> None:
         """
         Delegate Security Lake administration to an account
 
@@ -46,14 +46,13 @@ class SecurityLake:
             f"Delegating Security Lake administration to account {account_id}", region=self.region
         )
         try:
-            self.client.create_datalake_delegated_admin(account=account_id)
+            self.client.register_data_lake_delegated_administrator(accountId=account_id)
             logger.debug(
                 f"Delegated Security Lake administration to account {account_id}",
                 region=self.region,
             )
         except botocore.exceptions.ClientError as error:
-            # raises ValidationException if already delegated
-            if error.response["Error"]["Code"] != "ValidationException":
+            if error.response["Error"]["Code"] != "ConflictException":
                 logger.exception(
                     f"Unable to delegate Security Lake administration to account {account_id}",
                     region=self.region,
