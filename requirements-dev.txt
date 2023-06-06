@@ -1,4 +1,4 @@
 black==23.3.0
 wheel==0.40.0
-pre-commit==3.2.1
-mypy-boto3-guardduty==1.26.103
+pre-commit==3.3.2
+mypy-boto3-guardduty==1.26.130

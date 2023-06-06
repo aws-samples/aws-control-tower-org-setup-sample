@@ -26,7 +26,7 @@ import boto3
 import botocore
 
 if TYPE_CHECKING:
-    from mypy_boto3_guardduty import GuardDutyClient
+    from mypy_boto3_guardduty import GuardDutyClient, ListDetectorsPaginator
 
 from ..constants import BOTO3_CONFIG
 
@@ -37,7 +37,7 @@ __all__ = ["GuardDuty"]
 
 class GuardDuty:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client: GuardDutyClient = session.client(
+        self.client: "GuardDutyClient" = session.client(
             "guardduty", region_name=region, config=BOTO3_CONFIG
         )
         self.region = region
@@ -72,9 +72,9 @@ class GuardDuty:
         Executes in: delegated administrator account in all regions
         """
 
-        detector_ids = []
+        detector_ids: List[str] = []
 
-        paginator = self.client.get_paginator("list_detectors")
+        paginator: "ListDetectorsPaginator" = self.client.get_paginator("list_detectors")
         page_iterator = paginator.paginate()
         for page in page_iterator:
             detector_ids.extend(page.get("DetectorIds", []))
@@ -112,10 +112,7 @@ class GuardDuty:
                                 },
                             ],
                         },
-                        {
-                            "Name": "LAMBDA_NETWORK_LOGS",
-                            "Status": "ENABLED"
-                        }
+                        {"Name": "LAMBDA_NETWORK_LOGS", "Status": "ENABLED"},
                     ],
                 )
         else:

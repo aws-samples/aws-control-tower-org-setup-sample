@@ -30,6 +30,7 @@ from crhelper import CfnResource
 
 from .resources import (
     AccessAnalyzer,
+    CloudFormation,
     Detective,
     EC2,
     FMS,
@@ -113,7 +114,7 @@ def setup_region(admin_account_id: str, region: str, accounts: List[Dict[str, st
     # Detective(management_session, region).enable_organization_admin_account(admin_account_id)
 
     # Delegate Security Lake to the administrator account
-    SecurityLake(management_session, region).create_datalake_delegated_admin(admin_account_id)
+    SecurityLake(management_session, region).register_data_lake_delegated_administrator(admin_account_id)
 
     # Delegate Inspector to the administrator account
     Inspector(management_session, region).enable_delegated_admin_account(admin_account_id)
@@ -175,6 +176,8 @@ def setup_organization(
     with ThreadPoolExecutor(max_workers=5) as executor:
         for _ in executor.map(lambda f: setup_region(*f), args):
             pass
+
+    CloudFormation(management_session, primary_region).activate_organizations_access()
 
     delegate_session = STS(management_session).assume_role(admin_account_id)
 
