@@ -20,6 +20,7 @@
 """
 
 from .accessanalyzer import AccessAnalyzer
+from .cloudformation import CloudFormation
 from .detective import Detective
 from .ec2 import EC2
 from .fms import FMS
@@ -35,6 +36,7 @@ from .sts import STS
 
 __all__ = [
     "AccessAnalyzer",
+    "CloudFormation",
     "Detective",
     "EC2",
     "FMS",

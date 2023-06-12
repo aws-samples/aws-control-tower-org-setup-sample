@@ -27,34 +27,29 @@ from ..constants import BOTO3_CONFIG
 
 logger = Logger(child=True)
 
-__all__ = ["SecurityLake"]
+__all__ = ["CloudFormation"]
 
 
-class SecurityLake:
+class CloudFormation:
     def __init__(self, session: boto3.Session, region: str) -> None:
-        self.client = session.client("securitylake", region_name=region, config=BOTO3_CONFIG)
+        self.client = session.client("cloudformation", region_name=region, config=BOTO3_CONFIG)
         self.region = region
 
-    def register_data_lake_delegated_administrator(self, account_id: str) -> None:
+    def activate_organizations_access(self) -> None:
         """
-        Delegate Security Lake administration to an account
+        Activate organization access for CloudFormation StackSets
 
         Executes in: management account in all regions
         """
 
-        logger.info(
-            f"Delegating Security Lake administration to account {account_id}", region=self.region
-        )
+        logger.info("Activating organization access", region=self.region)
         try:
-            self.client.register_data_lake_delegated_administrator(accountId=account_id)
-            logger.debug(
-                f"Delegated Security Lake administration to account {account_id}",
-                region=self.region,
-            )
+            self.client.activate_organizations_access()
+            logger.debug("Activated organizations access", region=self.region)
         except botocore.exceptions.ClientError as error:
-            if error.response["Error"]["Code"] != "ConflictException":
+            if error.response["Error"]["Code"] != "InvalidOperationException":
                 logger.exception(
-                    f"Unable to delegate Security Lake administration to account {account_id}",
+                    f"Unable to activate organizations access",
                     region=self.region,
                 )
                 raise error

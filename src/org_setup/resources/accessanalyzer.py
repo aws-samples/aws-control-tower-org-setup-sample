@@ -47,7 +47,7 @@ class AccessAnalyzer:
             self.client.create_analyzer(analyzerName=MANAGEMENT_ANALYZER_NAME, type="ACCOUNT")
             logger.debug("Created account IAM access analyzer", region=self.region)
         except botocore.exceptions.ClientError as error:
-            if error.response["Error"]["Code"] != "ServiceQuotaExceededException":
+            if error.response["Error"]["Code"] != "ConflictException":
                 logger.exception(
                     "Unable to create an account IAM access analyzer", region=self.region
                 )
