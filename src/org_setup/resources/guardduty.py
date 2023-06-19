@@ -181,7 +181,7 @@ class GuardDuty:
                             },
                         ],
                     },
-                    {"Name": "LAMBDA_NETWORK_LOGS", "Status": "NEW"},
+                    {"Name": "LAMBDA_NETWORK_LOGS", "AutoEnable": "NEW"},
                 ],
                 AutoEnableOrganizationMembers="ALL",
             )
