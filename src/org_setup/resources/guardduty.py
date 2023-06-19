@@ -146,6 +146,7 @@ class GuardDuty:
                             },
                         ],
                     },
+                    {"Name": "LAMBDA_NETWORK_LOGS", "Status": "ENABLED"},
                 ],
             )
             detector_ids.append(response["DetectorId"])
@@ -180,6 +181,7 @@ class GuardDuty:
                             },
                         ],
                     },
+                    {"Name": "LAMBDA_NETWORK_LOGS", "Status": "NEW"},
                 ],
                 AutoEnableOrganizationMembers="ALL",
             )
