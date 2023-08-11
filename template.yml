@@ -113,19 +113,6 @@ Resources:
               - Effect: Allow
                 Action: "iam:CreateServiceLinkedRole"
                 Resource: "*"
-                Condition:
-                  StringLike:
-                    "iam:AWSServiceName":
-                      - !Sub "access-analyzer.${AWS::URLSuffix}"
-                      - !Sub "detective.${AWS::URLSuffix}"
-                      - !Sub "fms.${AWS::URLSuffix}"
-                      - !Sub "inspector2.${AWS::URLSuffix}"
-                      - !Sub "macie.${AWS::URLSuffix}"
-                      - !Sub "orgsdatasync.servicecatalog.${AWS::URLSuffix}"
-                      - !Sub "ram.${AWS::URLSuffix}"
-                      - !Sub "securitylake.${AWS::URLSuffix}"
-                      - !Sub "stacksets.cloudformation.${AWS::URLSuffix}"
-                      - !Sub "sync.servicecatalog.${AWS::URLSuffix}"
               - Effect: Allow
                 Action: "sts:AssumeRole"
                 Resource: !Sub "arn:${AWS::Partition}:iam::*:role/AWSControlTowerExecution"
@@ -176,6 +163,8 @@ Resources:
           - id: W89
             reason: "Ignore VPC"
     Properties:
+      Architectures:
+        - arm64
       CodeSigningConfigArn: !Ref CodeSigningConfig
       CodeUri: src/
       Description: DO NOT DELETE - Organization Setup Function
@@ -208,7 +197,7 @@ Resources:
       MemorySize: 256 # megabytes
       ReservedConcurrentExecutions: 1
       Role: !GetAtt OrganizationSetupFunctionRole.Arn
-      Runtime: python3.10
+      Runtime: python3.11
       Tags:
         GITHUB_ORG: aws-samples
         GITHUB_REPO: aws-control-tower-org-setup-sample
