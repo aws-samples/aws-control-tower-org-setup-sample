@@ -8,7 +8,7 @@ updates:
       prefix: chore
       include: scope
   - package-ecosystem: "pip"
-    directory: "/dependencies"
+    directory: "/src"
     schedule:
       interval: "weekly"
     commit-message:
