@@ -195,9 +195,10 @@ Resources:
                       - SUCCEEDED
       Handler: org_setup.lambda_handler.handler
       MemorySize: 256 # megabytes
+      PropagateTags: true
       ReservedConcurrentExecutions: 1
       Role: !GetAtt OrganizationSetupFunctionRole.Arn
-      Runtime: python3.11
+      Runtime: python3.12
       Tags:
         GITHUB_ORG: aws-samples
         GITHUB_REPO: aws-control-tower-org-setup-sample
