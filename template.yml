@@ -54,7 +54,9 @@ Resources:
       cfn_nag:
         rules_to_suppress:
           - id: W11
-            reason: "Ignore * in resource policy"
+            reason: "Ignore wildcard in resource policy"
+          - id: W76
+            reason: "Ignore large policy"
     Properties:
       AssumeRolePolicyDocument:
         Version: "2012-10-17"

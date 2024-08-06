@@ -103,16 +103,27 @@ class GuardDuty:
                             "Status": "ENABLED",
                         },
                         {
-                            "Name": "EKS_RUNTIME_MONITORING",
+                            "Name": "LAMBDA_NETWORK_LOGS",
+                            "Status": "ENABLED",
+                        },
+                        {
+                            "Name": "RUNTIME_MONITORING",
                             "Status": "ENABLED",
                             "AdditionalConfiguration": [
                                 {
                                     "Name": "EKS_ADDON_MANAGEMENT",
                                     "Status": "ENABLED",
                                 },
+                                {
+                                    "Name": "ECS_FARGATE_AGENT_MANAGEMENT",
+                                    "Status": "ENABLED",
+                                },
+                                {
+                                    "Name": "EC2_AGENT_MANAGEMENT",
+                                    "Status": "ENABLED",
+                                },
                             ],
                         },
-                        {"Name": "LAMBDA_NETWORK_LOGS", "Status": "ENABLED"},
                     ],
                 )
         else:
@@ -137,16 +148,27 @@ class GuardDuty:
                         "Status": "ENABLED",
                     },
                     {
-                        "Name": "EKS_RUNTIME_MONITORING",
+                        "Name": "LAMBDA_NETWORK_LOGS",
+                        "Status": "ENABLED",
+                    },
+                    {
+                        "Name": "RUNTIME_MONITORING",
                         "Status": "ENABLED",
                         "AdditionalConfiguration": [
                             {
                                 "Name": "EKS_ADDON_MANAGEMENT",
                                 "Status": "ENABLED",
                             },
+                            {
+                                "Name": "ECS_FARGATE_AGENT_MANAGEMENT",
+                                "Status": "ENABLED",
+                            },
+                            {
+                                "Name": "EC2_AGENT_MANAGEMENT",
+                                "Status": "ENABLED",
+                            },
                         ],
                     },
-                    {"Name": "LAMBDA_NETWORK_LOGS", "Status": "ENABLED"},
                 ],
             )
             detector_ids.append(response["DetectorId"])
@@ -172,16 +194,27 @@ class GuardDuty:
                         "AutoEnable": "NEW",
                     },
                     {
-                        "Name": "EKS_RUNTIME_MONITORING",
+                        "Name": "LAMBDA_NETWORK_LOGS",
+                        "AutoEnable": "NEW",
+                    },
+                    {
+                        "Name": "RUNTIME_MONITORING",
                         "AutoEnable": "NEW",
                         "AdditionalConfiguration": [
                             {
                                 "Name": "EKS_ADDON_MANAGEMENT",
                                 "AutoEnable": "NEW",
                             },
+                            {
+                                "Name": "ECS_FARGATE_AGENT_MANAGEMENT",
+                                "AutoEnable": "NEW",
+                            },
+                            {
+                                "Name": "EC2_AGENT_MANAGEMENT",
+                                "AutoEnable": "NEW",
+                            },
                         ],
                     },
-                    {"Name": "LAMBDA_NETWORK_LOGS", "AutoEnable": "NEW"},
                 ],
                 AutoEnableOrganizationMembers="ALL",
             )
