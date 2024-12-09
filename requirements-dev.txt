@@ -1,4 +1,4 @@
 black==24.10.0
 wheel==0.45.1
 pre-commit==3.8.0
-boto3-stubs[guardduty]==1.35.69
+boto3-stubs[guardduty]==1.35.77
